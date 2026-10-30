@@ -47,4 +47,14 @@ public abstract class OptionsMixin {
 
         if (Modules.get().isActive(Freecam.class)) ci.cancel();
     }
+
+    @Inject(method = "save", at = @At("HEAD"))
+    private void onSaveHead(CallbackInfo ci) {
+        meteordevelopment.meteorclient.systems.modules.Anti_detection.HideKeybinds.restoreIfHidden();
+    }
+
+    @Inject(method = "save", at = @At("RETURN"))
+    private void onSaveReturn(CallbackInfo ci) {
+        meteordevelopment.meteorclient.systems.modules.Anti_detection.HideKeybinds.rehideIfWasHidden();
+    }
 }

@@ -292,8 +292,6 @@ public abstract class MinecraftMixin implements IMinecraft {
     // Freecam
     @Inject(method = "pick", at = @At("HEAD"), cancellable = true)
     private void updateTargetedEntityInvoke(float partialTicks, CallbackInfo ci) {
-        if (Modules.get() == null) return;
-
         Freecam freecam = Modules.get().get(Freecam.class);
         boolean highwayBuilder = Modules.get().isActive(HighwayBuilder.class);
 

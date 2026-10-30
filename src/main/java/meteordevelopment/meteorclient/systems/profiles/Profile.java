@@ -80,14 +80,15 @@ public class Profile implements ISerializable<Profile> {
     public void load() {
         File folder = getFile();
 
-        if (hud.get()) Hud.get().load(folder);
-        if (macros.get()) Macros.get().load(folder);
-        if (modules.get()) Modules.get().load(folder);
-        if (waypoints.get()) Waypoints.get().load(folder);
+        if (hud.get() && new File(folder, "hud.nbt").exists()) Hud.get().load(folder);
+        if (macros.get() && new File(folder, "macros.nbt").exists()) Macros.get().load(folder);
+        if (modules.get() && new File(folder, "modules.nbt").exists()) Modules.get().load(folder);
+        if (waypoints.get() && new File(folder, "waypoints.nbt").exists()) Waypoints.get().load(folder);
     }
 
     public void save() {
         File folder = getFile();
+        folder.mkdirs();
 
         if (hud.get()) Hud.get().save(folder);
         if (macros.get()) Macros.get().save(folder);

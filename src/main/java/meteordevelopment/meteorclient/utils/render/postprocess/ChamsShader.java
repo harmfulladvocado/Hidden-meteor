@@ -5,12 +5,11 @@
 
 package meteordevelopment.meteorclient.utils.render.postprocess;
 
+import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.platform.TextureUtil;
-import com.mojang.renderpearl.api.GpuFormat;
-import com.mojang.renderpearl.api.buffers.GpuBuffer;
-import com.mojang.renderpearl.api.textures.FilterMode;
+import com.mojang.blaze3d.textures.FilterMode;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.events.game.ResourcePacksReloadedEvent;
 import meteordevelopment.meteorclient.renderer.MeshRenderer;
@@ -21,8 +20,7 @@ import meteordevelopment.meteorclient.systems.modules.render.Chams;
 import meteordevelopment.meteorclient.utils.PostInit;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.renderer.DynamicGpuDataStorage;
-import net.minecraft.client.renderer.DynamicGpuDataStorageMapped;
+import net.minecraft.client.renderer.DynamicUniformStorage;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.PngInfo;
 import net.minecraft.world.entity.Entity;
@@ -64,6 +62,8 @@ public class ChamsShader extends EntityShader {
                         data.rewind();
                     }
                 }
+
+                data = TextureUtil.readResource(optional.get().open());
                 break;
             }
             if (data == null) return;
@@ -96,7 +96,7 @@ public class ChamsShader extends EntityShader {
     protected void setupPass(MeshRenderer renderer) {
         Color color = chams.shaderColor.get();
 
-        renderer.uniform("ImageData", UNIFORM_STORAGE.writeData(new UniformData(
+        renderer.uniform("ImageData", UNIFORM_STORAGE.writeUniform(new UniformData(
             color.r / 255f, color.g / 255f, color.b / 255f, color.a / 255f
         )));
 
@@ -123,13 +123,13 @@ public class ChamsShader extends EntityShader {
         .putVec4()
         .get();
 
-    private static final DynamicGpuDataStorage<UniformData> UNIFORM_STORAGE = new DynamicGpuDataStorageMapped<>("Meteor - Image UBO", UNIFORM_SIZE, GpuBuffer.USAGE_UNIFORM, 16);
+    private static final DynamicUniformStorage<UniformData> UNIFORM_STORAGE = new DynamicUniformStorage<>("Lithium - Image UBO", UNIFORM_SIZE, 16);
 
     public static void flipFrame() {
         UNIFORM_STORAGE.endFrame();
     }
 
-    private record UniformData(float r, float g, float b, float a) implements DynamicGpuDataStorage.DynamicGpuData {
+    private record UniformData(float r, float g, float b, float a) implements DynamicUniformStorage.DynamicUniform {
         @Override
         public void write(@NonNull ByteBuffer buffer) {
             Std140Builder.intoBuffer(buffer)

@@ -25,9 +25,8 @@ import net.minecraft.world.item.component.WrittenBookContent;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -47,7 +46,7 @@ public class BookBot extends Module {
         .name("file")
         .description("Which file to use.")
         .defaultValue(DEFAULT_FILE)
-        .filter("txt")
+        .filter("*.txt")
         .visible(() -> mode.get() == Mode.File)
         .build()
     );
@@ -205,7 +204,7 @@ public class BookBot extends Module {
             }
 
             // Read each line of the file and construct a string with the needed line breaks
-            try (BufferedReader reader = Files.newBufferedReader(file.get().toPath(), StandardCharsets.UTF_8)) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(file.get()))) {
                 StringBuilder file = new StringBuilder();
 
                 String line;

@@ -26,6 +26,7 @@ import meteordevelopment.meteorclient.mixininterface.IClientboundExplodePacket;
 import meteordevelopment.meteorclient.pathing.BaritoneUtils;
 import meteordevelopment.meteorclient.systems.config.Config;
 import meteordevelopment.meteorclient.systems.modules.Modules;
+import meteordevelopment.meteorclient.systems.modules.Anti_detection.Panic;
 import meteordevelopment.meteorclient.systems.modules.movement.Velocity;
 import meteordevelopment.meteorclient.systems.modules.player.NoRotate;
 import meteordevelopment.meteorclient.systems.modules.render.NoRender;
@@ -58,7 +59,7 @@ public abstract class ClientPacketListenerMixin extends ClientCommonPacketListen
 
     @Inject(method = "handleAddEntity", at = @At("HEAD"), cancellable = true)
     private void onHandleAddEntity(ClientboundAddEntityPacket packet, CallbackInfo ci) {
-        if (packet != null) {
+        if (packet != null && packet.getType() != null) {
             if (Modules.get().get(NoRender.class).noEntity(packet.getType()) && Modules.get().get(NoRender.class).getDropSpawnPacket()) {
                 ci.cancel();
             }
@@ -79,7 +80,6 @@ public abstract class ClientPacketListenerMixin extends ClientCommonPacketListen
         MeteorClient.EVENT_BUS.post(GameJoinedEvent.get());
     }
 
-    // the server sends a GameJoin packet after the reconfiguration phase
     @Inject(method = "handleConfigurationStart", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V", shift = At.Shift.AFTER))
     private void onHandleConfigurationStart(ClientboundStartConfigurationPacket packet, CallbackInfo ci) {
         MeteorClient.EVENT_BUS.post(GameLeftEvent.get());
@@ -92,7 +92,7 @@ public abstract class ClientPacketListenerMixin extends ClientCommonPacketListen
 
     @Inject(method = "handleLevelChunkWithLight", at = @At("TAIL"))
     private void onHandleLevelChunkWithLight(ClientboundLevelChunkWithLightPacket packet, CallbackInfo ci) {
-        LevelChunk chunk = minecraft.level.getChunk(packet.x(), packet.z());
+        LevelChunk chunk = minecraft.level.getChunk(packet.getX(), packet.getZ());
         MeteorClient.EVENT_BUS.post(new ChunkDataEvent(chunk));
     }
 
@@ -106,9 +106,9 @@ public abstract class ClientPacketListenerMixin extends ClientCommonPacketListen
         MeteorClient.EVENT_BUS.post(InventoryEvent.get(packet));
     }
 
-    @Inject(method = "handleRemoveEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ClientboundRemoveEntitiesPacket;entityIds()Lit/unimi/dsi/fastutil/ints/IntList;"))
+    @Inject(method = "handleRemoveEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ClientboundRemoveEntitiesPacket;getEntityIds()Lit/unimi/dsi/fastutil/ints/IntList;"))
     private void onHandleRemoveEntities(ClientboundRemoveEntitiesPacket packet, CallbackInfo ci) {
-        for (int id : packet.entityIds()) {
+        for (int id : packet.getEntityIds()) {
             MeteorClient.EVENT_BUS.post(EntityDestroyEvent.get(minecraft.level.getEntity(id)));
         }
     }
@@ -151,7 +151,6 @@ public abstract class ClientPacketListenerMixin extends ClientCommonPacketListen
         float savedYaw = yawRef.get();
         float savedPitch = pitchRef.get();
 
-        //not noticeable by player but forces a server update
         minecraft.player.setYRot(savedYaw + 0.000001f);
         minecraft.player.setXRot(savedPitch + 0.000001f);
         minecraft.player.yHeadRot = savedYaw;
@@ -160,6 +159,11 @@ public abstract class ClientPacketListenerMixin extends ClientCommonPacketListen
 
     @Inject(method = "sendChat", at = @At("HEAD"), cancellable = true)
     private void onSendChatMessage(String message, CallbackInfo ci, @Local(argsOnly = true, name = "content") LocalRef<String> messageRef) {
+        if (Panic.COMMANDS_DISABLED && message.startsWith(Config.get().prefix.get())) {
+            ci.cancel();
+            return;
+        }
+
         if (!message.startsWith(Config.get().prefix.get()) && !(BaritoneUtils.IS_AVAILABLE && message.startsWith(BaritoneUtils.getPrefix()))) {
             SendMessageEvent event = MeteorClient.EVENT_BUS.post(SendMessageEvent.get(message));
 

@@ -21,7 +21,6 @@ import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -106,6 +105,7 @@ public class EntityUtils {
         return playerListEntry.getGameMode();
     }
 
+    @SuppressWarnings("deprecation") // Use of AbstractBlock.AbstractBlockState#blocksMovement
     public static boolean isAboveWater(Entity entity) {
         BlockPos.MutableBlockPos blockPos = entity.blockPosition().mutable();
         int bottom = mc.level.getMinY();
@@ -113,9 +113,7 @@ public class EntityUtils {
         while (blockPos.getY() > bottom) {
             BlockState state = mc.level.getBlockState(blockPos);
 
-            // todo is there a better way to replace BlockBehaviour.BlockStateBase#blocksMotion than just copy-pasting the method body?
-            Block block = state.getBlock();
-            if (block != Blocks.COBWEB && block != Blocks.BAMBOO_SAPLING && state.isSolid()) break;
+            if (state.blocksMotion()) break;
 
             Fluid fluid = state.getFluidState().getType();
             if (fluid == Fluids.WATER || fluid == Fluids.FLOWING_WATER) {

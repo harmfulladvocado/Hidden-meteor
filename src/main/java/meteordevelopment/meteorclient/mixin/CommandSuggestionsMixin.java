@@ -6,11 +6,13 @@
 package meteordevelopment.meteorclient.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.suggestion.Suggestions;
 import meteordevelopment.meteorclient.commands.Commands;
 import meteordevelopment.meteorclient.systems.config.Config;
+import meteordevelopment.meteorclient.utils.misc.input.KeyBinds;
 import net.minecraft.client.gui.components.CommandSuggestions;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
@@ -52,6 +54,8 @@ public abstract class CommandSuggestionsMixin {
         cancellable = true
     )
     public void onRefresh(CallbackInfo ci, @Local(name = "reader") StringReader reader) {
+        if (((KeyMappingAccessor) (Object) KeyBinds.OPEN_GUI).meteor$getKey().equals(InputConstants.UNKNOWN)) return;
+
         String prefix = Config.get().prefix.get();
         int length = prefix.length();
 

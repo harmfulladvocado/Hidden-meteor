@@ -5,11 +5,15 @@
 
 package meteordevelopment.meteorclient.systems.modules.combat;
 
+import meteordevelopment.meteorclient.events.render.Render3DEvent;
+import meteordevelopment.meteorclient.renderer.ShapeMode;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.friends.Friends;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.player.InvUtils;
+import meteordevelopment.meteorclient.utils.render.color.Color;
+import meteordevelopment.orbit.EventHandler;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -35,6 +39,13 @@ public class Hitboxes extends Module {
         .name("expand")
         .description("How much to expand the hitbox of the entity.")
         .defaultValue(0.5)
+        .build()
+    );
+
+    public final Setting<Boolean> spoofVisualSize = sgGeneral.add(new BoolSetting.Builder()
+        .name("spoof-visual-size")
+        .description("Renders hitboxes at normal size when F3+B is active, hiding the expansion.")
+        .defaultValue(false)
         .build()
     );
 
@@ -118,6 +129,34 @@ public class Hitboxes extends Module {
 
     public Hitboxes() {
         super(Categories.Combat, "hitboxes", "Expands an entity's hitboxes.");
+    }
+
+    @EventHandler
+    private void onRender3D(Render3DEvent event) {
+        if (!isActive() || !spoofVisualSize.get()) return;
+
+        for (Entity entity : mc.level.entitiesForRendering()) {
+            if (entity == mc.player) continue;
+            if (!entities.get().contains(entity.getType())) continue;
+            if (ignoreFriends.get() && entity instanceof Player player && Friends.get().isFriend(player)) continue;
+            if (!testWeapon()) continue;
+
+            double expansion = value.get();
+            if (expansion <= 0) continue;
+
+            double width = entity.getBbWidth();
+            double height = entity.getBbHeight();
+            double depth = entity.getBbWidth();
+
+            double minX = entity.getX() - (width / 2.0);
+            double minY = entity.getY();
+            double minZ = entity.getZ() - (depth / 2.0);
+            double maxX = minX + width;
+            double maxY = minY + height;
+            double maxZ = minZ + depth;
+
+            event.renderer.box(minX, minY, minZ, maxX, maxY, maxZ, new Color(255, 255, 255, 255), new Color(0, 0, 0, 0), ShapeMode.Lines, 0);
+        }
     }
 
     public double getEntityValue(Entity entity) {

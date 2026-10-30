@@ -41,7 +41,7 @@ public class ReflectInit {
     public static void init(Class<? extends Annotation> annotation) {
         for (Reflections reflection : reflections) {
             Set<Method> initTasks = reflection.getMethodsAnnotatedWith(annotation);
-            if (initTasks == null) continue;
+            if (initTasks == null) return;
 
             Map<Class<?>, List<Method>> byClass = initTasks.stream().collect(Collectors.groupingBy(Method::getDeclaringClass));
             Set<Method> left = new HashSet<>(initTasks);

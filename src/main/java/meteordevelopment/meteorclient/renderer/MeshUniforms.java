@@ -5,12 +5,10 @@
 
 package meteordevelopment.meteorclient.renderer;
 
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
-import com.mojang.renderpearl.api.buffers.GpuBuffer;
-import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
-import net.minecraft.client.renderer.DynamicGpuDataStorage;
-import net.minecraft.client.renderer.DynamicGpuDataStorageMapped;
+import net.minecraft.client.renderer.DynamicUniformStorage;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.NonNull;
 
@@ -24,7 +22,7 @@ public class MeshUniforms {
 
     private static final Data DATA = new Data();
 
-    private static final DynamicGpuDataStorage<Data> STORAGE = new DynamicGpuDataStorageMapped<>("Meteor - Mesh UBO", SIZE, GpuBuffer.USAGE_UNIFORM, 16);
+    private static final DynamicUniformStorage<Data> STORAGE = new DynamicUniformStorage<>("Lithium - Mesh UBO", SIZE, 16);
 
     public static void flipFrame() {
         STORAGE.endFrame();
@@ -34,10 +32,10 @@ public class MeshUniforms {
         DATA.proj = proj;
         DATA.modelView = modelView;
 
-        return STORAGE.writeData(DATA);
+        return STORAGE.writeUniform(DATA);
     }
 
-    private static final class Data implements DynamicGpuDataStorage.DynamicGpuData {
+    private static final class Data implements DynamicUniformStorage.DynamicUniform {
         private Matrix4f proj;
         private Matrix4f modelView;
 

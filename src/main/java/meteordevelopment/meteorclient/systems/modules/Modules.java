@@ -5,12 +5,17 @@
 
 package meteordevelopment.meteorclient.systems.modules;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import meteordevelopment.meteorclient.systems.modules.Anti_detection.HideKeybinds;
+import meteordevelopment.meteorclient.systems.modules.Anti_detection.Panic;
+import meteordevelopment.meteorclient.systems.modules.Anti_detection.EmptyScreenshots;
+import meteordevelopment.meteorclient.systems.modules.Anti_detection.FixInconsistencies;
+import meteordevelopment.meteorclient.systems.modules.Anti_detection.ResistTranslationDetection;
+import meteordevelopment.meteorclient.systems.modules.Anti_detection.VanishNotifier;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.events.game.GameJoinedEvent;
 import meteordevelopment.meteorclient.events.game.GameLeftEvent;
@@ -48,6 +53,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import org.jspecify.annotations.Nullable;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.io.File;
 import java.util.*;
@@ -81,6 +87,11 @@ public class Modules extends System<Modules> {
         initRender();
         initWorld();
         initMisc();
+        initAnti_detection();
+
+        for (Module module : getAll()) {
+            if (module.defaultActive) module.enable();
+        }
     }
 
     @Override
@@ -143,7 +154,6 @@ public class Modules extends System<Modules> {
     public Collection<Module> getAll() {
         return moduleInstances.values();
     }
-
 
     public int getCount() {
         return moduleInstances.size();
@@ -218,10 +228,6 @@ public class Modules extends System<Modules> {
         this.moduleToBind = moduleToBind;
     }
 
-    /***
-     * @see meteordevelopment.meteorclient.commands.commands.BindCommand
-     * For ensuring we don't instantly bind the module to the enter key.
-     */
     public void awaitKeyRelease() {
         this.awaitingKeyRelease = true;
     }
@@ -277,7 +283,7 @@ public class Modules extends System<Modules> {
     }
 
     private void onAction(boolean isKey, int value, int modifiers, boolean isPress) {
-        if (mc.gui.screen() != null || Input.isKeyPressed(InputConstants.KEY_F3)) return;
+        if (Input.isKeyPressed(InputConstants.KEY_F3)) return;
 
         // A bind with modifiers takes precedence over one without, so pressing Ctrl + G does not
         // also toggle a module bound to plain G.
@@ -292,6 +298,7 @@ public class Modules extends System<Modules> {
 
         for (Module module : moduleInstances.values()) {
             if (modifierBindMatched && !module.keybind.hasMods()) continue;
+            if (mc.gui.screen() != null && !(module instanceof Panic)) continue;
 
             if (module.keybind.matches(isKey, value, modifiers) && (isPress || (module.toggleOnBindRelease && module.isActive()))) {
                 module.toggle();
@@ -340,7 +347,8 @@ public class Modules extends System<Modules> {
 
     public void disableAll() {
         synchronized (active) {
-            for (Module module : getAll()) {
+            List<Module> activeSnapshot = new ArrayList<>(active);
+            for (Module module : activeSnapshot) {
                 module.disable();
             }
         }
@@ -364,11 +372,21 @@ public class Modules extends System<Modules> {
     public Modules fromTag(CompoundTag tag) {
         disableAll();
 
+        java.util.Set<String> presentModules = new java.util.HashSet<>();
         ListTag modulesTag = tag.getListOrEmpty("modules");
         for (Tag moduleTagI : modulesTag) {
             CompoundTag moduleTag = (CompoundTag) moduleTagI;
             Module module = get(moduleTag.getStringOr("name", ""));
-            if (module != null) module.fromTag(moduleTag);
+            if (module != null) {
+                presentModules.add(module.name);
+                module.fromTag(moduleTag);
+            }
+        }
+
+        for (Module module : getAll()) {
+            if (module.defaultActive && !presentModules.contains(module.name)) {
+                module.enable();
+            }
         }
 
         return this;
@@ -377,12 +395,10 @@ public class Modules extends System<Modules> {
     // INIT MODULES
 
     public void add(Module module) {
-        // Check if the module's category is registered
         if (!CATEGORIES.contains(module.category)) {
             throw new RuntimeException("Modules.addModule - Module's category was not registered.");
         }
 
-        // Remove the previous module with the same name
         AtomicReference<Module> removedModule = new AtomicReference<>();
         if (moduleInstances.values().removeIf(module1 -> {
             if (module1.name.equals(module.name)) {
@@ -397,11 +413,9 @@ public class Modules extends System<Modules> {
             getGroup(removedModule.get().category).remove(removedModule.get());
         }
 
-        // Add the module
         moduleInstances.put(module.getClass(), module);
         getGroup(module.category).add(module);
 
-        // Register color settings for the module
         module.settings.registerColorSettings(module);
     }
 
@@ -593,5 +607,14 @@ public class Modules extends System<Modules> {
         add(new SoundBlocker());
         add(new Spam());
         add(new Swarm());
+    }
+
+    private void initAnti_detection() {
+        add(new Panic());
+        add(new EmptyScreenshots());
+        add(new HideKeybinds());
+        add(new FixInconsistencies());
+        add(new ResistTranslationDetection());
+        add(new VanishNotifier());
     }
 }
