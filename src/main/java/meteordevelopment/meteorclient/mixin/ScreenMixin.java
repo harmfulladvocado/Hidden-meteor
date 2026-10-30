@@ -10,6 +10,7 @@ import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.commands.Commands;
 import meteordevelopment.meteorclient.systems.config.Config;
 import meteordevelopment.meteorclient.systems.modules.Modules;
+import meteordevelopment.meteorclient.systems.modules.Anti_detection.Panic;
 import meteordevelopment.meteorclient.systems.modules.movement.GUIMove;
 import meteordevelopment.meteorclient.systems.modules.render.NoRender;
 import meteordevelopment.meteorclient.utils.Utils;
@@ -29,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static com.mojang.blaze3d.platform.InputConstants.*;
 
-@Mixin(value = Screen.class, priority = 500) // needs to be before baritone
+@Mixin(value = Screen.class, priority = 500)
 public abstract class ScreenMixin {
 
     @Unique
@@ -48,7 +49,7 @@ public abstract class ScreenMixin {
         if (event instanceof RunnableClickEvent runnableClickEvent) {
             runnableClickEvent.runnable.run();
             ci.cancel();
-        } else if (event instanceof MeteorClickEvent meteorClickEvent && meteorClickEvent.value.startsWith(Config.get().prefix.get())) {
+        } else if (!Panic.COMMANDS_DISABLED && event instanceof MeteorClickEvent meteorClickEvent && meteorClickEvent.value.startsWith(Config.get().prefix.get())) {
             try {
                 Commands.dispatch(meteorClickEvent.value.substring(Config.get().prefix.get().length()));
             } catch (CommandSyntaxException e) {

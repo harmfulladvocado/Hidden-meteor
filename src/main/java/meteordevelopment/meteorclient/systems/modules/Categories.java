@@ -17,6 +17,7 @@ public class Categories {
     public static final Category Render = new Category("Render", () -> DisplayItemUtils.toStack(Items.GLASS));
     public static final Category World = new Category("World", () -> DisplayItemUtils.toStack(Items.GRASS_BLOCK));
     public static final Category Misc = new Category("Misc", () -> DisplayItemUtils.toStack(Items.LAVA_BUCKET));
+    public static final Category Anti_detection = new Category("Anti-detection", () -> DisplayItemUtils.toStack(Items.SHIELD));
 
     public static boolean REGISTERING;
 
@@ -30,6 +31,7 @@ public class Categories {
         Modules.registerCategory(Render);
         Modules.registerCategory(World);
         Modules.registerCategory(Misc);
+        Modules.registerCategory(Anti_detection);
 
         // Addons
         AddonManager.ADDONS.forEach(MeteorAddon::onRegisterCategories);

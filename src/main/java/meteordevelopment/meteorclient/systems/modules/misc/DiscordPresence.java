@@ -7,11 +7,9 @@ package meteordevelopment.meteorclient.systems.modules.misc;
 
 //Created by squidoodly
 
-import com.mojang.blaze3d.Blaze3D;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import meteordevelopment.discordipc.DiscordIPC;
 import meteordevelopment.discordipc.RichPresence;
-import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.events.game.OpenScreenEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.gui.GuiTheme;
@@ -35,9 +33,9 @@ import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.EditWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.realms.RealmsScreen;
+import net.minecraft.util.Util;
 import org.meteordev.starscript.Script;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +45,9 @@ public class DiscordPresence extends Module {
         Sequential
     }
 
+    // Prism Launcher Discord app
+    private static final long APP_ID = 1082728941138034698L;
+
     private final SettingGroup sgLine1 = settings.createGroup("Line 1");
     private final SettingGroup sgLine2 = settings.createGroup("Line 2");
 
@@ -55,7 +56,7 @@ public class DiscordPresence extends Module {
     private final Setting<List<String>> line1Strings = sgLine1.add(new StringListSetting.Builder()
         .name("line-1-messages")
         .description("Messages used for the first line.")
-        .defaultValue("{player}", "{server}")
+        .defaultValue("Playing Minecraft", "On {server}")
         .onChanged(_ -> recompileLine1())
         .renderer(StarscriptTextBoxRenderer.class)
         .build()
@@ -82,7 +83,7 @@ public class DiscordPresence extends Module {
     private final Setting<List<String>> line2Strings = sgLine2.add(new StringListSetting.Builder()
         .name("line-2-messages")
         .description("Messages used for the second line.")
-        .defaultValue("Meteor on Crack!", "{round(server.tps, 1)} TPS", "Playing on {server.difficulty} difficulty.", "{server.player_count} Players online")
+        .defaultValue("Survival mode", "Exploring the world", "Building something")
         .onChanged(_ -> recompileLine2())
         .renderer(StarscriptTextBoxRenderer.class)
         .build()
@@ -105,7 +106,6 @@ public class DiscordPresence extends Module {
     );
 
     private static final RichPresence rpc = new RichPresence();
-    private SmallImage currentSmallImage;
     private int ticks;
     private boolean forceUpdate, lastWasInMainMenu;
 
@@ -123,7 +123,7 @@ public class DiscordPresence extends Module {
     }
 
     public DiscordPresence() {
-        super(Categories.Misc, "discord-presence", "Displays Meteor as your presence on Discord.");
+        super(Categories.Misc, "discord-presence", "Shows your Minecraft activity on Discord.");
 
         runInMainMenu = true;
     }
@@ -144,15 +144,10 @@ public class DiscordPresence extends Module {
 
     @Override
     public void onActivate() {
-        DiscordIPC.start(835240968533049424L, null);
+        DiscordIPC.start(APP_ID, null);
 
         rpc.setStart(System.currentTimeMillis() / 1000L);
-
-        String largeText = "%s %s".formatted(MeteorClient.NAME, MeteorClient.VERSION);
-        if (!MeteorClient.BUILD_NUMBER.isEmpty()) largeText += " Build: " + MeteorClient.BUILD_NUMBER;
-        rpc.setLargeImage("meteor_client", largeText);
-
-        currentSmallImage = SmallImage.Snail;
+        rpc.setLargeImage("logo", "Playing Minecraft");
 
         recompileLine1();
         recompileLine2();
@@ -194,12 +189,8 @@ public class DiscordPresence extends Module {
     private void onTick(TickEvent.Post event) {
         boolean update = false;
 
-        // Image
+        // Image cycle removed
         if (ticks >= 200 || forceUpdate) {
-            currentSmallImage = currentSmallImage.next();
-            currentSmallImage.apply();
-            update = true;
-
             ticks = 0;
         } else ticks++;
 
@@ -239,7 +230,7 @@ public class DiscordPresence extends Module {
             } else line2Ticks++;
         } else {
             if (!lastWasInMainMenu) {
-                rpc.setDetails(MeteorClient.NAME + " " + (MeteorClient.BUILD_NUMBER.isEmpty() ? MeteorClient.VERSION : MeteorClient.VERSION + " " + MeteorClient.BUILD_NUMBER));
+                rpc.setDetails("Playing Minecraft");
 
                 if (mc.gui.screen() instanceof TitleScreen) rpc.setState("Looking at title screen");
                 else if (mc.gui.screen() instanceof SelectWorldScreen) rpc.setState("Selecting world");
@@ -251,7 +242,7 @@ public class DiscordPresence extends Module {
                 else if (mc.gui.screen() instanceof ManageServerScreen) rpc.setState("Adding server");
                 else if (mc.gui.screen() instanceof ConnectScreen || mc.gui.screen() instanceof DirectJoinServerScreen)
                     rpc.setState("Connecting to server");
-                else if (mc.gui.screen() instanceof WidgetScreen) rpc.setState("Browsing Meteor's GUI");
+                else if (mc.gui.screen() instanceof WidgetScreen) rpc.setState("In-game menu");
                 else if (mc.gui.screen() instanceof OptionsScreen || mc.gui.screen() instanceof SkinCustomizationScreen || mc.gui.screen() instanceof SoundOptionsScreen || mc.gui.screen() instanceof VideoSettingsScreen || mc.gui.screen() instanceof ControlsScreen || mc.gui.screen() instanceof LanguageSelectScreen || mc.gui.screen() instanceof ChatOptionsScreen || mc.gui.screen() instanceof PackSelectionScreen || mc.gui.screen() instanceof AccessibilityOptionsScreen)
                     rpc.setState("Changing options");
                 else if (mc.gui.screen() instanceof WinScreen) rpc.setState("Reading credits");
@@ -289,29 +280,9 @@ public class DiscordPresence extends Module {
     @Override
     public WWidget getWidget(GuiTheme theme) {
         WButton help = theme.button("Open documentation.");
-        help.action = () -> Blaze3D.openUri(URI.create("https://github.com/MeteorDevelopment/meteor-client/wiki/Starscript"));
+        help.action = () -> Util.getPlatform().openUri("https://github.com/MeteorDevelopment/meteor-client/wiki/Starscript");
 
         return help;
     }
-
-    private enum SmallImage {
-        MineGame("minegame", "MineGame159"),
-        Snail("seasnail", "seasnail8169");
-
-        private final String key, text;
-
-        SmallImage(String key, String text) {
-            this.key = key;
-            this.text = text;
-        }
-
-        void apply() {
-            rpc.setSmallImage(key, text);
-        }
-
-        SmallImage next() {
-            if (this == MineGame) return Snail;
-            return MineGame;
-        }
-    }
 }
+

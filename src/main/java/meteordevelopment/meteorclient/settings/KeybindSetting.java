@@ -5,7 +5,6 @@
 
 package meteordevelopment.meteorclient.settings;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.events.meteor.KeyInputEvent;
 import meteordevelopment.meteorclient.events.meteor.MouseClickEvent;
@@ -15,6 +14,7 @@ import meteordevelopment.meteorclient.utils.misc.input.KeyAction;
 import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
 import net.minecraft.nbt.CompoundTag;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.function.Consumer;
 

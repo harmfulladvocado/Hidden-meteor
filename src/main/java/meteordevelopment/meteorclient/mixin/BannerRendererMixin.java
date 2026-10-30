@@ -62,18 +62,19 @@ public abstract class BannerRendererMixin {
     }
 
     @Unique
-    private static void renderPillar(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int light, BannerModel model, SpriteGetter sprites, ModelFeatureRenderer.CrumblingOverlay breakProgress) {
+    private static void renderPillar(PoseStack matrices, SubmitNodeCollector submitNodeCollector, int light, BannerModel model, SpriteGetter sprites, ModelFeatureRenderer.CrumblingOverlay breakProgress) {
         SpriteId sprite = Sheets.BANNER_BASE;
         submitNodeCollector.submitModel(
             model,
             Unit.INSTANCE,
-            poseStack,
+            matrices,
             light,
             OverlayTexture.NO_OVERLAY,
             -1,
             sprite,
             sprites,
-            0
+            0,
+            breakProgress
         );
     }
 }

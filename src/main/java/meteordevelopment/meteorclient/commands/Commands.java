@@ -5,13 +5,16 @@
 
 package meteordevelopment.meteorclient.commands;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.commands.commands.*;
 import meteordevelopment.meteorclient.events.game.GameJoinedEvent;
+import meteordevelopment.meteorclient.mixin.KeyMappingAccessor;
 import meteordevelopment.meteorclient.pathing.PathManagers;
 import meteordevelopment.meteorclient.utils.PostInit;
+import meteordevelopment.meteorclient.utils.misc.input.KeyBinds;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;
@@ -80,6 +83,7 @@ public class Commands {
     }
 
     public static void dispatch(String message) throws CommandSyntaxException {
+        if (((KeyMappingAccessor) (Object) KeyBinds.OPEN_GUI).meteor$getKey().equals(InputConstants.UNKNOWN)) return;
         DISPATCHER.execute(message, mc.getConnection().getSuggestionsProvider());
     }
 
@@ -93,23 +97,6 @@ public class Commands {
         return null;
     }
 
-    /**
-     * Argument types that rely on Minecraft registries access those registries through a {@link CommandBuildContext}
-     * object. Since dynamic registries are specific to each server, we need to make a new CommandBuildContext object
-     * every time we join a server.
-     * <p>
-     * The command tree and by extension the {@link CommandDispatcher} also have to be rebuilt because:
-     * <ol>
-     * <li>Argument types that require registries use a registry wrapper object that is created and stored in the
-     *     argument type objects when the command tree is built.
-     * <li>Registry entries and keys are compared using referential equality. Even if the data encoded is the same,
-     *     registry wrapper objects' dynamic data becomes stale after joining another server.
-     * <li>The CommandDispatcher's node merging only adds missing children, it cannot replace stale argument type
-     *     objects.
-     * </ol>
-     *
-     * @author Crosby
-     */
     @EventHandler
     private static void onJoin(GameJoinedEvent event) {
         ClientPacketListener networkHandler = mc.getConnection();

@@ -23,18 +23,22 @@ import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.systems.profiles.Profile;
 import meteordevelopment.meteorclient.systems.profiles.Profiles;
 import meteordevelopment.meteorclient.utils.Utils;
-import meteordevelopment.meteorclient.utils.misc.FileDialogs;
 import meteordevelopment.meteorclient.utils.misc.NbtUtils;
 import meteordevelopment.meteorclient.utils.render.prompts.OkPrompt;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import org.apache.commons.io.FilenameUtils;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +47,17 @@ import java.util.Optional;
 import static meteordevelopment.meteorclient.MeteorClient.mc;
 
 public class ProfilesTab extends Tab {
+    private static final PointerBuffer filters;
+
+    static {
+        filters = BufferUtils.createPointerBuffer(1);
+
+        ByteBuffer pngFilter = MemoryUtil.memASCII("*.nbt");
+
+        filters.put(pngFilter);
+        filters.rewind();
+    }
+
     public ProfilesTab() {
         super("Profiles");
     }
@@ -79,12 +94,11 @@ public class ProfilesTab extends Tab {
             // Import
             WButton importBtn = l.add(theme.button("Import")).expandX().widget();
             importBtn.tooltip = "Import profile";
-            importBtn.action = () -> FileDialogs.openFile("nbt", profileFile -> {
+            importBtn.action = () -> {
                 try {
-                    Profile profile = importProfile(profileFile);
-
-                    if (profile != null)
-                        MeteorClient.LOG.info("Successfully imported profile '{}'.", profile.name.get());
+                    Profile imported = importProfile();
+                    if (imported != null)
+                        MeteorClient.LOG.info("Successfully imported profile '{}'.", imported.name.get());
                     reload();
                 } catch (Exception e) {
                     MeteorClient.LOG.error("Error importing profile", e);
@@ -95,7 +109,7 @@ public class ProfilesTab extends Tab {
                         .dontShowAgainCheckboxVisible(false)
                         .show();
                 }
-            });
+            };
         }
 
         private void initTable(WTable table) {
@@ -128,7 +142,11 @@ public class ProfilesTab extends Tab {
             }
         }
 
-        private Profile importProfile(File profileFile) throws IOException {
+        private Profile importProfile() throws IOException {
+            String file = TinyFileDialogs.tinyfd_openFileDialog("Select profile to import", null, filters, null, false);
+            if (file == null) return null;
+            File profileFile = new File(file);
+
             CompoundTag nbt = NbtIo.read(profileFile.toPath());
             if (nbt == null) return null;
 
@@ -265,20 +283,20 @@ public class ProfilesTab extends Tab {
 
             WContainer settingsContainer = add(theme.verticalList()).expandX().minWidth(400).widget();
 
-            settingsContainer.add(theme.horizontalSeparator()).expandX();
+            settingsContainer.add(theme.horizontalSeparator()).expandX().widget();
 
             WCheckbox hud = addBool(settingsContainer, profile.settings.get("hud", Boolean.class));
             WCheckbox macros = addBool(settingsContainer, profile.settings.get("macros", Boolean.class));
             WCheckbox modules = addBool(settingsContainer, profile.settings.get("modules", Boolean.class));
             WCheckbox waypoints = addBool(settingsContainer, profile.settings.get("waypoints", Boolean.class));
 
-            add(theme.horizontalSeparator()).expandX();
+            add(theme.horizontalSeparator()).expandX().widget();
 
             WButton export = add(theme.button("Export profile")).expandX().widget();
-            export.action = () -> FileDialogs.saveFile("nbt", file -> {
-                exportProfile(file.getPath(), profile, hud.checked, macros.checked, modules.checked, waypoints.checked);
+            export.action = () -> {
+                exportProfile(profile, hud.checked, macros.checked, modules.checked, waypoints.checked);
                 onClose();
-            });
+            };
         }
 
         private WCheckbox addBool(WContainer container, Setting<Boolean> setting) {
@@ -291,7 +309,8 @@ public class ProfilesTab extends Tab {
             return c;
         }
 
-        private void exportProfile(String path, Profile profile, boolean hud, boolean macros, boolean modules, boolean waypoints) {
+        private void exportProfile(Profile profile, boolean hud, boolean macros, boolean modules, boolean waypoints) {
+            String path = TinyFileDialogs.tinyfd_saveFileDialog("Save profile", profile.name.get(), filters, null);
             if (path == null) return;
             Path p = Path.of(path.endsWith(".nbt") ? path : path + ".nbt");
 

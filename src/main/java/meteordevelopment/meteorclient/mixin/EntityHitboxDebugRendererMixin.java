@@ -18,7 +18,11 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class EntityHitboxDebugRendererMixin {
     @ModifyExpressionValue(method = "showHitboxes", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getBoundingBox()Lnet/minecraft/world/phys/AABB;", ordinal = 0))
     private AABB meteor$createHitbox(AABB original, Entity entity, float partialTicks, boolean isServerEntity) {
-        double v = Modules.get().get(Hitboxes.class).getEntityValue(entity);
+        Hitboxes module = Modules.get().get(Hitboxes.class);
+        // Hitbox size spoofer
+        if (module.spoofVisualSize.get()) return original;
+
+        double v = module.getEntityValue(entity);
         if (v == 0) return original;
 
         return original.inflate(v);

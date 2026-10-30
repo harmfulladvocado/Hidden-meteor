@@ -16,7 +16,6 @@ import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.misc.ListMode;
 import meteordevelopment.meteorclient.utils.misc.Pool;
 import meteordevelopment.meteorclient.utils.player.Rotations;
-import meteordevelopment.meteorclient.utils.player.SwingMode;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import meteordevelopment.meteorclient.utils.world.BlockUtils;
 import meteordevelopment.orbit.EventHandler;
@@ -222,7 +221,7 @@ public class VeinMiner extends Module {
 
         public void mine() {
             if (!mining) {
-                SwingMode.of(swingHand.get()).attackSwing(InteractionHand.MAIN_HAND);
+                mc.player.swing(InteractionHand.MAIN_HAND);
                 mining = true;
             }
             if (rotate.get())

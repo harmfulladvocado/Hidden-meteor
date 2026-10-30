@@ -18,10 +18,8 @@ import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
 import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
-import net.minecraft.world.level.block.entity.SignTextSlot;
 
 import java.util.ArrayDeque;
-import java.util.List;
 import java.util.Queue;
 
 public class AutoSign extends Module {
@@ -36,8 +34,7 @@ public class AutoSign extends Module {
         .build()
     );
 
-    private List<String> text;
-    private SignTextSlot slot;
+    private String[] text;
 
     // Some servers (e.g., 2b2t) don't like the sign packet being sent too soon after the swing or block click packets, so queue them.
     // Delaying by sleeping in the event handler may be fine for a single sign, but would visibly lag the UI at a larger scale.
@@ -51,7 +48,6 @@ public class AutoSign extends Module {
     @Override
     public void onDeactivate() {
         text = null;
-        slot = null;
     }
 
     @EventHandler
@@ -76,19 +72,18 @@ public class AutoSign extends Module {
 
     @EventHandler
     private void onSendPacket(PacketEvent.Send event) {
-        if (!(event.packet instanceof ServerboundSignUpdatePacket signPacket)) return;
+        if (!(event.packet instanceof ServerboundSignUpdatePacket)) return;
 
-        text = signPacket.lines();
-        slot = signPacket.slot();
+        text = ((ServerboundSignUpdatePacket) event.packet).getLines();
     }
 
     @EventHandler
     private void onOpenScreen(OpenScreenEvent event) {
-        if (!(event.screen instanceof AbstractSignEditScreen) || text == null || slot == null) return;
+        if (!(event.screen instanceof AbstractSignEditScreen) || text == null) return;
 
         SignBlockEntity sign = ((AbstractSignEditScreenAccessor) event.screen).meteor$getSign();
 
-        queue.add(new ServerboundSignUpdatePacket(sign.getBlockPos(), text, slot));
+        queue.add(new ServerboundSignUpdatePacket(sign.getBlockPos(), true, text[0], text[1], text[2], text[3]));
 
         event.cancel();
     }

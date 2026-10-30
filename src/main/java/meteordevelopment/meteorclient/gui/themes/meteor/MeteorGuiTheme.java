@@ -5,6 +5,7 @@
 
 package meteordevelopment.meteorclient.gui.themes.meteor;
 
+import com.mojang.blaze3d.platform.MacosUtil;
 import meteordevelopment.meteorclient.gui.DefaultSettingsWidgetFactory;
 import meteordevelopment.meteorclient.gui.GuiTheme;
 import meteordevelopment.meteorclient.gui.WidgetScreen;
@@ -30,7 +31,6 @@ import meteordevelopment.meteorclient.systems.accounts.Account;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
-import org.apache.commons.lang3.SystemUtils;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
 
@@ -85,6 +85,11 @@ public class MeteorGuiTheme extends GuiTheme {
         .name("hide-HUD")
         .description("Hide HUD when in GUI.")
         .defaultValue(false)
+        .onChanged(v -> {
+            if (mc.gui.screen() instanceof WidgetScreen) {
+                mc.gameRenderer.gameRenderState().guiRenderState.isHudHidden = v;
+            }
+        })
         .build()
     );
 
@@ -170,7 +175,7 @@ public class MeteorGuiTheme extends GuiTheme {
     private final Setting<SettingColor> starscriptAccessedObjects = color(sgStarscript, "starscript-accessed-objects", "Color of accessed objects (before a dot) in Starscript code.", new SettingColor(152, 118, 170));
 
     public MeteorGuiTheme() {
-        super("Meteor");
+        super("Lithium");
 
         settingsFactory = new DefaultSettingsWidgetFactory(this);
     }
@@ -375,7 +380,7 @@ public class MeteorGuiTheme extends GuiTheme {
     public double scale(double value) {
         double scaled = value * scale.get();
 
-        if (SystemUtils.IS_OS_MAC) {
+        if (MacosUtil.IS_MACOS) {
             scaled /= (double) mc.getWindow().getWidth() / mc.getWindow().getWidth();
         }
 

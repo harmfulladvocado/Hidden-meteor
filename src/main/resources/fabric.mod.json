@@ -1,29 +1,24 @@
 {
   "schemaVersion": 1,
-  "name": "Meteor Client",
-  "id": "meteor-client",
+  "name": "Lithium",
+  "id": "lithium",
   "version": "${version}",
-  "description": "Based utility mod.",
+  "description": "Lithium is a free and open-source optimization mod for Minecraft which makes a wide range of performance improvements to the game.",
   "authors": [
-    "MineGame159",
-    "squidoodly",
-    "seasnail"
+    "JellySquid",
+    "2No2Name"
   ],
   "contact": {
-    "homepage": "https://meteorclient.com",
-    "issues": "https://github.com/MeteorDevelopment/meteor-client/issues",
-    "sources": "https://github.com/MeteorDevelopment/meteor-client",
-    "discord": "https://meteorclient.com/discord"
+    "homepage": "https://jellysquid.me/projects/",
+    "sources": "https://github.com/CaffeineMC/lithium-fabric",
+    "issues": "https://github.com/CaffeineMC/lithium-fabric/issues"
   },
-  "license": "GPL-3.0",
-  "icon": "assets/meteor-client/icon.png",
-  "environment": "client",
+  "license": "LGPL-3.0-only",
+  "icon": "assets/lithium/icon.png",
+  "environment": "",
   "entrypoints": {
     "client": [
       "meteordevelopment.meteorclient.MeteorClient"
-    ],
-    "modmenu": [
-      "meteordevelopment.meteorclient.modintegration.ModMenuIntegration"
     ]
   },
   "mixins": [
@@ -32,18 +27,13 @@
     "meteor-client-indigo.mixins.json",
     "meteor-client-sodium.mixins.json",
     "meteor-client-lithium.mixins.json",
-    "meteor-client-metallum.mixins.json"
+    "meteor-client-viafabricplus.mixins.json"
   ],
   "accessWidener": "meteor-client.classtweaker",
   "custom": {
-    "meteor-client:build_number": "${build_number}",
-    "meteor-client:color": "145,61,226",
-    "meteor-client:commit": "${commit}",
-    "modmenu": {
-      "links": {
-        "modmenu.discord": "https://meteorclient.com/discord"
-      }
-    },
+    "lithium:build_number": "${build_number}",
+    "lithium:color": "145,61,226",
+    "lithium:commit": "${commit}",
     "badoptimizations:cache_hooks": {
       "lightmap": "meteordevelopment.meteorclient.modintegration.BadOptimizationsHook"
     }
@@ -57,8 +47,6 @@
     "optifabric": "*",
     "feather": "*",
     "origins": "*",
-    "sodium": "<0.9.1",
-    "morechathistory": "*",
-    "lithium": "<0.22.1"
+    "morechathistory": "*"
   }
 }

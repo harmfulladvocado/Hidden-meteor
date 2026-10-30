@@ -14,9 +14,6 @@ import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
-import net.minecraft.world.clock.ClockNetworkState;
-
-import java.util.Map;
 
 public class TimeChanger extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
@@ -37,45 +34,24 @@ public class TimeChanger extends Module {
 
     @Override
     public void onActivate() {
-        if (mc.level != null) oldTime = mc.level.getDefaultClockTime();
+        oldTime = mc.level.getGameTime();
     }
 
     @Override
     public void onDeactivate() {
-        if (mc.level == null) return;
-
-        mc.level.dimensionType().defaultClock().ifPresent(clock -> {
-            mc.level.clockManager().handleUpdates(mc.level.getGameTime(), Map.of(clock, new ClockNetworkState(oldTime, 0f, 1f)));
-            mc.level.environmentAttributes().invalidateTickCache();
-        });
+        mc.level.getLevelData().setGameTime(oldTime);
     }
 
     @EventHandler
     private void onPacketReceive(PacketEvent.Receive event) {
         if (event.packet instanceof ClientboundSetTimePacket packet) {
-            if (mc.level == null) return;
-
-            mc.execute(() -> {
-                if (mc.level != null) {
-                    mc.level.setTimeFromServer(packet.gameTime());
-                    mc.level.dimensionType().defaultClock().ifPresent(clock -> {
-                        ClockNetworkState state = packet.clockUpdates().get(clock);
-                        if (state != null) oldTime = state.totalTicks();
-                    });
-                }
-            });
+            oldTime = packet.gameTime();
             event.cancel();
         }
     }
 
     @EventHandler
     private void onTick(TickEvent.Post event) {
-        if (mc.level == null) return;
-
-        long customTime = time.get().longValue();
-        mc.level.dimensionType().defaultClock().ifPresent(clock -> {
-            mc.level.clockManager().handleUpdates(mc.level.getGameTime(), Map.of(clock, new ClockNetworkState(customTime, 0f, 0f)));
-            mc.level.environmentAttributes().invalidateTickCache();
-        });
+        mc.level.getLevelData().setGameTime(time.get().longValue());
     }
 }

@@ -72,10 +72,8 @@ public abstract class ModelBlockRendererMixin {
             materialInfo.sprite(),
             ChunkSectionLayer.TRANSLUCENT,
             materialInfo.itemRenderType(),
-            materialInfo.itemGlintRenderType(),
-            materialInfo.itemGlintSpecialRenderType(),
             materialInfo.tintIndex(),
-            materialInfo.shadeDirectionOverride(),
+            materialInfo.shade(),
             materialInfo.lightEmission()
         );
 

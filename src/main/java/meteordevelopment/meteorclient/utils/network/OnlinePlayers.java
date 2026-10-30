@@ -6,22 +6,16 @@
 package meteordevelopment.meteorclient.utils.network;
 
 public class OnlinePlayers {
-    private static long lastPingTime;
 
     private OnlinePlayers() {
     }
 
     public static void update() {
-        long time = System.currentTimeMillis();
-
-        if (time - lastPingTime > 5 * 60 * 1000) {
-            MeteorExecutor.execute(() -> Http.post("https://meteorclient.com/api/online/ping").ignoreExceptions().send());
-
-            lastPingTime = time;
-        }
+        // Telemetry suppressed: outgoing pings to meteorclient.com would reveal
+        // the client identity to anyone monitoring network traffic.
     }
 
     public static void leave() {
-        MeteorExecutor.execute(() -> Http.post("https://meteorclient.com/api/online/leave").ignoreExceptions().send());
+        // Telemetry suppressed: see update().
     }
 }

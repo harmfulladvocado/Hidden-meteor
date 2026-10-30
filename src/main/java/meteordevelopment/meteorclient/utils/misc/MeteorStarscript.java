@@ -19,7 +19,6 @@ import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.utils.PreInit;
 import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.player.ChatUtils;
-import meteordevelopment.meteorclient.utils.player.InvUtils;
 import meteordevelopment.meteorclient.utils.player.PlayerUtils;
 import meteordevelopment.meteorclient.utils.world.Dimension;
 import meteordevelopment.meteorclient.utils.world.TickRate;
@@ -407,7 +406,13 @@ public class MeteorStarscript {
         Item item = BuiltInRegistries.ITEM.getValue(id);
         if (item == Items.AIR || mc.player == null) return Value.number(0);
 
-        return Value.number(InvUtils.find(item).count());
+        int count = 0;
+        for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
+            ItemStack itemStack = mc.player.getInventory().getItem(i);
+            if (itemStack.getItem() == item) count += itemStack.getCount();
+        }
+
+        return Value.number(count);
     }
 
     private static Value getMeteorPrefix() {

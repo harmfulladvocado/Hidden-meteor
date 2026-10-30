@@ -13,13 +13,16 @@ import meteordevelopment.meteorclient.systems.friends.Friends;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.systems.modules.Modules;
-import meteordevelopment.meteorclient.utils.entity.*;
+import meteordevelopment.meteorclient.utils.entity.EntityAgeTest;
+import meteordevelopment.meteorclient.utils.entity.EntityUtils;
+import meteordevelopment.meteorclient.utils.entity.SortPriority;
+import meteordevelopment.meteorclient.utils.entity.Target;
+import meteordevelopment.meteorclient.utils.entity.TargetUtils;
 import meteordevelopment.meteorclient.utils.entity.fakeplayer.FakePlayerEntity;
 import meteordevelopment.meteorclient.utils.player.FindItemResult;
 import meteordevelopment.meteorclient.utils.player.InvUtils;
 import meteordevelopment.meteorclient.utils.player.PlayerUtils;
 import meteordevelopment.meteorclient.utils.player.Rotations;
-import meteordevelopment.meteorclient.utils.player.SwingMode;
 import meteordevelopment.meteorclient.utils.world.TickRate;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
@@ -30,7 +33,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.animal.frog.Frog;
 import net.minecraft.world.entity.animal.parrot.Parrot;
 import net.minecraft.world.entity.animal.wolf.Wolf;
-import net.minecraft.world.entity.monster.Enderman;
+import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Zoglin;
 import net.minecraft.world.entity.monster.hoglin.Hoglin;
 import net.minecraft.world.entity.monster.piglin.Piglin;
@@ -332,7 +335,7 @@ public class KillAura extends Module {
                 weaponResult = InvUtils.find(this::acceptableWeapon, 0, 8);
 
             if (shouldShieldBreak()) {
-                FindItemResult axeResult = InvUtils.find(itemStack -> itemStack.is(ItemTags.AXES), 0, 8);
+                FindItemResult axeResult = InvUtils.find(itemStack -> itemStack.getItem() instanceof AxeItem, 0, 8);
                 if (axeResult.found()) weaponResult = axeResult;
             }
 
@@ -416,7 +419,7 @@ public class KillAura extends Module {
             ) return false;
         }
         if (ignorePassive.get()) {
-            if (entity instanceof Enderman enderman && !enderman.isCreepy()) return false;
+            if (entity instanceof EnderMan enderman && !enderman.isCreepy()) return false;
             if ((entity instanceof Piglin || entity instanceof ZombifiedPiglin || entity instanceof Wolf) && !((Mob) entity).isAggressive())
                 return false;
         }
@@ -462,13 +465,13 @@ public class KillAura extends Module {
             Rotations.rotate(Rotations.getYaw(target), Rotations.getPitch(target, Target.Body));
 
         mc.gameMode.attack(mc.player, target);
-        SwingMode.Both.attackSwing(InteractionHand.MAIN_HAND);
+        mc.player.swing(InteractionHand.MAIN_HAND);
 
         hitTimer = 0;
     }
 
     private boolean acceptableWeapon(ItemStack stack) {
-        if (shouldShieldBreak()) return stack.is(ItemTags.AXES);
+        if (shouldShieldBreak()) return stack.getItem() instanceof AxeItem;
         if (attackWhenHolding.get() == AttackItems.All) return true;
 
         if (weapons.get().contains(Items.DIAMOND_SWORD) && stack.is(ItemTags.SWORDS)) return true;
