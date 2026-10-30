@@ -60,14 +60,14 @@ public class Config extends System<Config> {
     public final Setting<Boolean> titleScreenCredits = sgVisual.add(new BoolSetting.Builder()
         .name("title-screen-credits")
         .description("Show Meteor credits on title screen")
-        .defaultValue(true)
+        .defaultValue(false)
         .build()
     );
 
     public final Setting<Boolean> titleScreenSplashes = sgVisual.add(new BoolSetting.Builder()
         .name("title-screen-splashes")
         .description("Show Meteor splash texts on title screen")
-        .defaultValue(true)
+        .defaultValue(false)
         .build()
     );
 
@@ -106,28 +106,28 @@ public class Config extends System<Config> {
     public final Setting<ButtonPosition> accountButtonAnchor = sgVisual.add(new EnumSetting.Builder<ButtonPosition>()
         .name("accounts-button")
         .description("Controls the position and visibility of the accounts button in the multiplayer screen.")
-        .defaultValue(ButtonPosition.TopRight)
+        .defaultValue(ButtonPosition.Hidden)
         .build()
     );
 
     public final Setting<Boolean> showAccountStatus = sgVisual.add(new BoolSetting.Builder()
         .name("account-status")
         .description("Shows information about the current account in the multiplayer screen.")
-        .defaultValue(true)
+        .defaultValue(false)
         .build()
     );
 
     public final Setting<ButtonPosition> proxiesButtonAnchor = sgVisual.add(new EnumSetting.Builder<ButtonPosition>()
         .name("proxies-button")
         .description("Controls the position and visibility of the proxies button in the multiplayer screen.")
-        .defaultValue(ButtonPosition.TopRight)
+        .defaultValue(ButtonPosition.Hidden)
         .build()
     );
 
     public final Setting<Boolean> showProxiesStatus = sgVisual.add(new BoolSetting.Builder()
         .name("proxy-status")
         .description("Shows information about the current proxy in the multiplayer screen.")
-        .defaultValue(true)
+        .defaultValue(false)
         .build()
     );
 
@@ -166,7 +166,7 @@ public class Config extends System<Config> {
     public final Setting<Boolean> chatFeedback = sgChat.add(new BoolSetting.Builder()
         .name("chat-feedback")
         .description("Sends chat feedback when meteor performs certain actions.")
-        .defaultValue(true)
+        .defaultValue(false)
         .build()
     );
 

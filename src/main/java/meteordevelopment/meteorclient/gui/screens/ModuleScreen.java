@@ -73,32 +73,34 @@ public class ModuleScreen extends WindowScreen {
         }
 
         // Bind
-        WSection section = add(theme.section("Bind", true)).expandX().widget();
+        if (module.bindable) {
+            WSection section = add(theme.section("Bind", true)).expandX().widget();
 
-        // Keybind
-        WHorizontalList bind = section.add(theme.horizontalList()).expandX().widget();
+            // Keybind
+            WHorizontalList bind = section.add(theme.horizontalList()).expandX().widget();
 
-        bind.add(theme.label("Bind: "));
-        keybind = bind.add(theme.keybind(module.keybind)).expandX().widget();
-        keybind.actionOnSet = () -> Modules.get().setModuleToBind(module);
+            bind.add(theme.label("Bind: "));
+            keybind = bind.add(theme.keybind(module.keybind)).expandX().widget();
+            keybind.actionOnSet = () -> Modules.get().setModuleToBind(module);
 
-        WButton reset = bind.add(theme.button(GuiRenderer.RESET)).expandCellX().right().widget();
-        reset.action = keybind::resetBind;
-        reset.tooltip = "Reset";
+            WButton reset = bind.add(theme.button(GuiRenderer.RESET)).expandCellX().right().widget();
+            reset.action = keybind::resetBind;
+            reset.tooltip = "Reset";
 
-        // Toggle on bind release
-        WHorizontalList tobr = section.add(theme.horizontalList()).widget();
+            // Toggle on bind release
+            WHorizontalList tobr = section.add(theme.horizontalList()).widget();
 
-        tobr.add(theme.label("Toggle on bind release: "));
-        WCheckbox tobrC = tobr.add(theme.checkbox(module.toggleOnBindRelease)).widget();
-        tobrC.action = () -> module.toggleOnBindRelease = tobrC.checked;
+            tobr.add(theme.label("Toggle on bind release: "));
+            WCheckbox tobrC = tobr.add(theme.checkbox(module.toggleOnBindRelease)).widget();
+            tobrC.action = () -> module.toggleOnBindRelease = tobrC.checked;
 
-        // Chat feedback
-        WHorizontalList cf = section.add(theme.horizontalList()).widget();
+            // Chat feedback
+            WHorizontalList cf = section.add(theme.horizontalList()).widget();
 
-        cf.add(theme.label("Chat Feedback: "));
-        WCheckbox cfC = cf.add(theme.checkbox(module.chatFeedback)).widget();
-        cfC.action = () -> module.chatFeedback = cfC.checked;
+            cf.add(theme.label("Chat Feedback: "));
+            WCheckbox cfC = cf.add(theme.checkbox(module.chatFeedback)).widget();
+            cfC.action = () -> module.chatFeedback = cfC.checked;
+        }
 
         add(theme.horizontalSeparator()).expandX();
 

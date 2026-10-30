@@ -7,6 +7,7 @@ package meteordevelopment.meteorclient;
 
 import meteordevelopment.meteorclient.addons.AddonManager;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
+import meteordevelopment.meteorclient.events.game.OpenScreenEvent;
 import meteordevelopment.meteorclient.events.meteor.KeyInputEvent;
 import meteordevelopment.meteorclient.events.meteor.MouseClickEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
@@ -17,11 +18,11 @@ import meteordevelopment.meteorclient.systems.Systems;
 import meteordevelopment.meteorclient.systems.config.Config;
 import meteordevelopment.meteorclient.systems.hud.screens.AddHudElementScreen;
 import meteordevelopment.meteorclient.systems.hud.screens.HudEditorScreen;
-import meteordevelopment.meteorclient.systems.hud.screens.HudElementPresetsScreen;
 import meteordevelopment.meteorclient.systems.hud.screens.HudElementScreen;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.misc.DiscordPresence;
+import meteordevelopment.meteorclient.systems.modules.Anti_detection.Panic;
 import meteordevelopment.meteorclient.utils.PostInit;
 import meteordevelopment.meteorclient.utils.PreInit;
 import meteordevelopment.meteorclient.utils.ReflectInit;
@@ -32,13 +33,13 @@ import meteordevelopment.meteorclient.utils.misc.input.KeyBinds;
 import meteordevelopment.meteorclient.utils.network.OnlinePlayers;
 import meteordevelopment.orbit.EventBus;
 import meteordevelopment.orbit.EventHandler;
+import meteordevelopment.orbit.EventPriority;
 import meteordevelopment.orbit.IEventBus;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ChatScreen;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,9 +47,11 @@ import org.spongepowered.asm.mixin.MixinEnvironment;
 
 import java.io.File;
 import java.lang.invoke.MethodHandles;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class MeteorClient implements ClientModInitializer {
-    public static final String MOD_ID = "meteor-client";
+    public static final String MOD_ID = "lithium";
     public static final ModMetadata MOD_META;
     public static final String NAME;
     public static final Version VERSION;
@@ -59,8 +62,11 @@ public class MeteorClient implements ClientModInitializer {
 
     public static Minecraft mc;
     public static final IEventBus EVENT_BUS = new EventBus();
-    public static final File FOLDER = FabricLoader.getInstance().getGameDir().resolve(MOD_ID).toFile();
+    public static final File FOLDER = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).toFile();
     public static final Logger LOG;
+
+    private boolean wasWidgetScreen;
+    private boolean wasHudHiddenRoot;
 
     static {
         MOD_META = FabricLoader.getInstance().getModContainer(MOD_ID).orElseThrow().getMetadata();
@@ -70,7 +76,7 @@ public class MeteorClient implements ClientModInitializer {
 
         String versionString = MOD_META.getVersion().getFriendlyString();
         if (versionString.contains("-")) versionString = versionString.split("-")[0];
-        // When building and running through IntelliJ and not Gradle it doesn't replace the version so just use a dummy
+        if (versionString.contains("+")) versionString = versionString.split("\\+")[0]; // Add this line
         if (versionString.equals("${version}")) versionString = "0.0.0";
 
         VERSION = new Version(versionString);
@@ -84,7 +90,6 @@ public class MeteorClient implements ClientModInitializer {
             return;
         }
 
-        // Global minecraft client accessor
         mc = Minecraft.getInstance();
 
         if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
@@ -94,11 +99,46 @@ public class MeteorClient implements ClientModInitializer {
 
         LOG.info("Initializing {}", NAME);
 
+        // Check for panic flag and re-apply panic state on launch
+        Path panicFlag = FabricLoader.getInstance().getConfigDir().resolve(".lithium_panic");
+        if (Files.exists(panicFlag)) {
+            Panic.COMMANDS_DISABLED = true;
+            KeyBinds.OPEN_GUI.setKey(com.mojang.blaze3d.platform.InputConstants.UNKNOWN);
+            KeyBinds.OPEN_COMMANDS.setKey(com.mojang.blaze3d.platform.InputConstants.UNKNOWN);
+            LOG.info("Panic flag detected, commands and GUI keybinds disabled.");
+        }
+
+        meteordevelopment.meteorclient.utils.misc.LogSanitizer.sanitizeLogFiles();
+
+        // Create lithium.properties file
+        Path lithiumProperties = FabricLoader.getInstance().getConfigDir().resolve("lithium.properties");
+        if (!Files.exists(lithiumProperties)) {
+            try {
+                if (lithiumProperties.getParent() != null) {
+                    Files.createDirectories(lithiumProperties.getParent());
+                }
+                Files.writeString(lithiumProperties,
+                    "# This is the configuration file for Lithium.\n" +
+                    "#\n" +
+                    "# You can find information on editing this file and all the available options here:\n" +
+                    "# https://github.com/CaffeineMC/lithium-fabric/wiki/Configuration-File\n" +
+                    "#\n" +
+                    "# By default, this file will be empty except for this notice.\n"
+                );
+            } catch (Exception e) {
+                LOG.error("Failed to create lithium.properties", e);
+            }
+        }
+
         // Pre-load
         if (!FOLDER.exists()) {
             FOLDER.getParentFile().mkdirs();
             FOLDER.mkdir();
-            Systems.addPreLoadTask(() -> Modules.get().get(DiscordPresence.class).enable());
+            Systems.addPreLoadTask(() -> {
+                Modules.get().get(DiscordPresence.class).enable();
+                Modules.get().get(meteordevelopment.meteorclient.systems.modules.Anti_detection.HideKeybinds.class).enable();
+                Modules.get().get(meteordevelopment.meteorclient.systems.modules.Anti_detection.FixInconsistencies.class).enable();
+            });
         }
 
         // Register addons
@@ -174,18 +214,21 @@ public class MeteorClient implements ClientModInitializer {
         else if (Utils.canOpenGui()) Tabs.get().getFirst().openScreen(GuiThemes.get());
     }
 
-    // Hide HUD
+    @EventHandler(priority = EventPriority.LOWEST)
+    private void onOpenScreen(OpenScreenEvent event) {
+        if (event.screen instanceof WidgetScreen) {
+            if (!wasWidgetScreen) wasHudHiddenRoot = mc.gameRenderer.gameRenderState().guiRenderState.isHudHidden;
+            if (GuiThemes.get().hideHUD() || wasHudHiddenRoot) {
+                mc.gameRenderer.gameRenderState().guiRenderState.isHudHidden = !(event.screen instanceof HudEditorScreen)
+                    && !(event.screen instanceof AddHudElementScreen)
+                    && !(event.screen instanceof HudElementScreen);
+            }
+        } else {
+            if (wasWidgetScreen) mc.gameRenderer.gameRenderState().guiRenderState.isHudHidden = wasHudHiddenRoot;
+            wasHudHiddenRoot = mc.gameRenderer.gameRenderState().guiRenderState.isHudHidden;
+        }
 
-    public static boolean shouldHideHud() {
-        if (!GuiThemes.get().hideHUD()) return false;
-
-        Screen screen = mc.gui.screen();
-        if (!(screen instanceof WidgetScreen)) return false;
-
-        return !(screen instanceof HudEditorScreen)
-            && !(screen instanceof AddHudElementScreen)
-            && !(screen instanceof HudElementScreen)
-            && !(screen instanceof HudElementPresetsScreen);
+        wasWidgetScreen = event.screen instanceof WidgetScreen;
     }
 
     public static Identifier identifier(String path) {

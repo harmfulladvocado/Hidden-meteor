@@ -5,7 +5,7 @@
 
 package meteordevelopment.meteorclient.gui;
 
-import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import com.mojang.blaze3d.platform.MacosUtil;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.gui.renderer.GuiDebugRenderer;
 import meteordevelopment.meteorclient.gui.renderer.GuiRenderer;
@@ -16,6 +16,7 @@ import meteordevelopment.meteorclient.gui.widgets.WWidget;
 import meteordevelopment.meteorclient.gui.widgets.containers.WContainer;
 import meteordevelopment.meteorclient.gui.widgets.input.WTextBox;
 import meteordevelopment.meteorclient.utils.Utils;
+import meteordevelopment.meteorclient.utils.misc.CursorStyle;
 import meteordevelopment.meteorclient.utils.misc.input.Input;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -24,9 +25,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
-import org.apache.commons.lang3.SystemUtils;
 import org.jspecify.annotations.NonNull;
-import org.lwjgl.sdl.SDLMouse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +33,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static com.mojang.blaze3d.platform.InputConstants.*;
 import static meteordevelopment.meteorclient.MeteorClient.mc;
 import static meteordevelopment.meteorclient.utils.Utils.getWindowHeight;
 import static meteordevelopment.meteorclient.utils.Utils.getWindowWidth;
+import static com.mojang.blaze3d.platform.InputConstants.*;
 
 public abstract class WidgetScreen extends Screen {
     private static final GuiRenderer RENDERER = new GuiRenderer();
@@ -106,8 +105,6 @@ public abstract class WidgetScreen extends Screen {
             firstInit = false;
             initWidgets();
         }
-
-        mc.textInputManager().startTextInput(this);
     }
 
     public abstract void initWidgets();
@@ -184,24 +181,20 @@ public abstract class WidgetScreen extends Screen {
     }
 
     @Override
-    public boolean keyReleased(@NonNull KeyEvent event) {
+    public boolean keyReleased(@NonNull KeyEvent input) {
         if (locked) return false;
 
-        boolean ctrl = SystemUtils.IS_OS_MAC
-            ? Input.modsMatch(event.modifiers(), MOD_SUPER)
-            : Input.modsMatch(event.modifiers(), MOD_CONTROL);
-
-        if (ctrl && event.key() == KEY_9) {
+        if ((input.modifiers() == MOD_CONTROL || input.modifiers() == MOD_SUPER) && input.key() == KEY_9) {
             debug = !debug;
             return true;
         }
 
-        if ((event.key() == KEY_RETURN || event.key() == KEY_NUMPADENTER) && enterAction != null) {
+        if ((input.key() == KEY_RETURN || input.key() == KEY_NUMPADENTER) && enterAction != null) {
             enterAction.run();
             return true;
         }
 
-        return super.keyReleased(event);
+        return super.keyReleased(input);
     }
 
     @Override
@@ -243,12 +236,10 @@ public abstract class WidgetScreen extends Screen {
             return true;
         }
 
-        boolean ctrl = SystemUtils.IS_OS_MAC
-            ? Input.modsMatch(input.modifiers(), MOD_SUPER)
-            : Input.modsMatch(input.modifiers(), MOD_CONTROL);
+        boolean control = MacosUtil.IS_MACOS ? input.modifiers() == MOD_SUPER : input.modifiers() == MOD_CONTROL;
 
-        return (ctrl && input.key() == KEY_C && toClipboard())
-            || (ctrl && input.key() == KEY_V && fromClipboard());
+        return (control && input.key() == KEY_C && toClipboard())
+            || (control && input.key() == KEY_V && fromClipboard());
     }
 
     public void keyRepeated(KeyEvent input) {
@@ -340,7 +331,7 @@ public abstract class WidgetScreen extends Screen {
             closed = true;
             onClosed();
 
-            Input.setCursorStyle(CursorTypes.ARROW);
+            Input.setCursorStyle(CursorStyle.Default);
 
             loopWidgets(root, widget -> {
                 if (widget instanceof WTextBox textBox && textBox.isFocused()) textBox.setFocused(false);
@@ -363,10 +354,8 @@ public abstract class WidgetScreen extends Screen {
 
                     // Restore mouse position to where it was when the screen was closed
                     if (parent != null) {
-                        SDLMouse.SDL_WarpMouseInWindow(mc.getWindow().handle(), (float) restoreX, (float) restoreY);
+                        grabOrReleaseMouse(mc.getWindow(), CURSOR_NORMAL, restoreX, restoreY);
                     }
-
-                    mc.textInputManager().stopTextInput(this);
                 };
             }
         }

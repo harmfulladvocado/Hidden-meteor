@@ -1,20 +1,17 @@
 package meteordevelopment.meteorclient.utils.render.postprocess;
 
-import com.mojang.blaze3d.Blaze3D;
+import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.renderpearl.api.GpuFormat;
-import com.mojang.renderpearl.api.buffers.GpuBuffer;
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
-import com.mojang.renderpearl.api.textures.FilterMode;
+import com.mojang.blaze3d.textures.FilterMode;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.renderer.MeshRenderer;
 import net.minecraft.client.gui.render.GuiRenderer;
-import net.minecraft.client.renderer.DynamicGpuDataStorage;
-import net.minecraft.client.renderer.DynamicGpuDataStorageMapped;
+import net.minecraft.client.renderer.DynamicUniformStorage;
 import org.jspecify.annotations.NonNull;
 
 import java.nio.ByteBuffer;
@@ -27,8 +24,8 @@ public abstract class PostProcessShader {
 
     protected PostProcessShader(RenderPipeline pipeline) {
         this.pipeline = pipeline;
-        this.framebuffer = new TextureTarget(MeteorClient.NAME + " PostProcessShader " + this.getClass().getSimpleName(), mc.getWindow().getWidth(), mc.getWindow().getHeight(),
-            GpuFormat.RGBA8_UNORM, GpuFormat.D32_FLOAT);
+        this.framebuffer = new TextureTarget(MeteorClient.NAME + " PostProcessShader " + this.getClass().getSimpleName(), mc.getWindow().getWidth(), mc.getWindow().getHeight(), true,
+            GpuFormat.RGBA8_UNORM);
     }
 
     protected abstract boolean shouldDraw();
@@ -63,9 +60,9 @@ public abstract class PostProcessShader {
             .attachments(mc.gameRenderer.mainRenderTarget())
             .pipeline(pipeline)
             .fullscreen()
-            .uniform("PostData", UNIFORM_STORAGE.writeData(new UniformData(
+            .uniform("PostData", UNIFORM_STORAGE.writeUniform(new UniformData(
                 (float) mc.getWindow().getWidth(), (float) mc.getWindow().getHeight(),
-                (float) Blaze3D.getTime()
+                (float) (mc.getFrameTimeNs() / 1e9)
             )))
             .sampler("u_Texture", framebuffer.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
 
@@ -86,14 +83,13 @@ public abstract class PostProcessShader {
         .putFloat()
         .get();
 
-    // todo what should usage be? not just here but everywhere else also
-    private static final DynamicGpuDataStorage<UniformData> UNIFORM_STORAGE = new DynamicGpuDataStorageMapped<>("Meteor - Post UBO", UNIFORM_SIZE, GpuBuffer.USAGE_UNIFORM, 16);
+    private static final DynamicUniformStorage<UniformData> UNIFORM_STORAGE = new DynamicUniformStorage<>("Lithium - Post UBO", UNIFORM_SIZE, 16);
 
     public static void flipFrame() {
         UNIFORM_STORAGE.endFrame();
     }
 
-    private record UniformData(float sizeX, float sizeY, float time) implements DynamicGpuDataStorage.DynamicGpuData {
+    private record UniformData(float sizeX, float sizeY, float time) implements DynamicUniformStorage.DynamicUniform {
         @Override
         public void write(@NonNull ByteBuffer buffer) {
             Std140Builder.intoBuffer(buffer)

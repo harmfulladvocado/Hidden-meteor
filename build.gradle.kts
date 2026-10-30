@@ -6,7 +6,8 @@ plugins {
     alias(libs.plugins.errorprone)
 }
 
-val archivesBaseName = providers.gradleProperty("archives_base_name").get()
+val modVersion = "0.25.3"
+val archivesBaseName = "lithium-fabric"
 val mavenGroup = providers.gradleProperty("maven_group").get()
 val runErrorProne = providers.gradleProperty("errorprone").isPresent
 
@@ -14,8 +15,7 @@ base {
     archivesName = archivesBaseName
     group = mavenGroup
 
-    val suffix = providers.gradleProperty("build_number").getOrElse("local")
-    version = "${libs.versions.minecraft.get()}-$suffix"
+    version = "$modVersion+mc${libs.versions.minecraft.get()}"
 }
 
 repositories {
@@ -71,7 +71,6 @@ configurations {
 }
 
 dependencies {
-    // Fabric
     minecraft(libs.minecraft)
     implementation(libs.fabric.loader)
 
@@ -84,6 +83,8 @@ dependencies {
     compileOnly(libs.sodium) { isTransitive = false }
     compileOnly(libs.lithium) { isTransitive = false }
     compileOnly(libs.iris) { isTransitive = false }
+    compileOnly(libs.viafabricplus) { isTransitive = false }
+    compileOnly(libs.viafabricplus.api) { isTransitive = false }
 
     compileOnly(libs.baritone)
     compileOnly(libs.modmenu)
@@ -101,9 +102,16 @@ dependencies {
         exclude("com.google.errorprone")
     }
 
-    // Error Prone
     errorprone(libs.errorprone.core)
     errorprone(libs.nullaway)
+}
+
+configurations.maybeCreate("mappings")
+
+afterEvaluate {
+    dependencies {
+        "mappings"("net.fabricmc:yarn:${libs.versions.minecraft.get()}+build.1:v2")
+    }
 }
 
 java {
@@ -126,7 +134,7 @@ listOf("api", "implementation", "include").forEach { configName ->
     configurations.named(configName).configure {
         defaultDependencies {
             configurations.getByName("jij").incoming.resolutionResult.allComponents
-                .mapNotNull { it.id as? ModuleComponentIdentifier }
+                .mapNotNull { id -> id.id as? ModuleComponentIdentifier }
                 .forEach { id ->
                     val notation = "${id.group}:${id.module}:${id.version}"
                     if (jijExcluded.none { notation.contains(it) }) {
@@ -170,15 +178,16 @@ fun toMinecraftCompat(version: String): String {
 
 tasks {
     processResources {
-        val buildNumber = providers.gradleProperty("build_number").getOrElse("")
+        val mcVersion = libs.versions.minecraft.get()
         val commit = providers.gradleProperty("commit").getOrElse("")
+        val buildNumber = "v$modVersion+mc$mcVersion"
 
         val propertyMap = mapOf(
             "version" to project.version,
             "build_number" to buildNumber,
             "commit" to commit,
             "jdk_version" to libs.versions.jdk.get(),
-            "minecraft_version" to toMinecraftCompat(libs.versions.minecraft.get()),
+            "minecraft_version" to toMinecraftCompat(mcVersion),
             "loader_version" to libs.versions.fabric.loader.get()
         )
 
@@ -197,10 +206,9 @@ tasks {
 
     jar {
         inputs.property("archivesName", archivesBaseName)
-        val licenseName = "LICENSE_$archivesBaseName"
 
         from("LICENSE") {
-            rename("LICENSE", licenseName)
+            rename { "${it}_$archivesBaseName" }
         }
 
         // Include launcher classes
@@ -243,6 +251,25 @@ tasks {
     build {
         if (System.getenv("CI")?.toBoolean() == true) {
             dependsOn("javadocJar")
+        }
+    }
+}
+
+tasks.matching { it.name == "jar" }.configureEach {
+    outputs.upToDateWhen { false }
+    outputs.cacheIf { false }
+
+    doLast {
+        val modsDir = file("C:/Users/Bonte/AppData/Roaming/PandoraLauncher/instances/Default/.minecraft/mods")
+        modsDir.mkdirs()
+
+        modsDir.listFiles()
+            ?.filter { it.name.startsWith("lithium-fabric-") && it.name.endsWith(".jar") }
+            ?.forEach { it.delete() }
+
+        copy {
+            from(outputs.files)
+            into(modsDir)
         }
     }
 }

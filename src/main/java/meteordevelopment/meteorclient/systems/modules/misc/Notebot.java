@@ -28,7 +28,6 @@ import meteordevelopment.meteorclient.utils.notebot.instrumentdetect.InstrumentD
 import meteordevelopment.meteorclient.utils.notebot.song.Note;
 import meteordevelopment.meteorclient.utils.notebot.song.Song;
 import meteordevelopment.meteorclient.utils.player.Rotations;
-import meteordevelopment.meteorclient.utils.player.SwingMode;
 import meteordevelopment.meteorclient.utils.render.NametagUtils;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
@@ -38,7 +37,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Util;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.NoteBlock;
@@ -729,17 +727,16 @@ public class Notebot extends Module {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }, Util.nonCriticalIoPool());
+        });
         loadingSongFuture.completeOnTimeout(null, 60, TimeUnit.SECONDS);
 
         stage = Stage.LoadingSong;
         long time1 = System.currentTimeMillis();
-        loadingSongFuture.whenCompleteAsync((song, ex) -> {
-            String baseName = FilenameUtils.getBaseName(file.getName());
+        loadingSongFuture.whenComplete((song, ex) -> {
             if (ex == null) {
                 // Song is null only when it times out
                 if (song == null) {
-                    error("Loading song '" + baseName + "' timed out.");
+                    error("Loading song '" + FilenameUtils.getBaseName(file.getName()) + "' timed out.");
                     onSongEnd();
                     return;
                 }
@@ -748,18 +745,18 @@ public class Notebot extends Module {
                 long time2 = System.currentTimeMillis();
                 long diff = time2 - time1;
 
-                info("Song '" + baseName + "' has been loaded to the memory! Took " + diff + "ms");
+                info("Song '" + FilenameUtils.getBaseName(file.getName()) + "' has been loaded to the memory! Took " + diff + "ms");
                 callback.run();
             } else {
                 if (ex instanceof CancellationException) {
-                    error("Loading song '" + baseName + "' was cancelled.");
+                    error("Loading song '" + FilenameUtils.getBaseName(file.getName()) + "' was cancelled.");
                 } else {
-                    error("An error occurred while loading song '" + baseName + "'. See the logs for more details");
-                    MeteorClient.LOG.error("An error occurred while loading song '{}'", baseName, ex);
+                    error("An error occurred while loading song '" + FilenameUtils.getBaseName(file.getName()) + "'. See the logs for more details");
+                    MeteorClient.LOG.error("An error occurred while loading song '{}'", FilenameUtils.getBaseName(file.getName()), ex);
                     onSongEnd();
                 }
             }
-        }, mc);
+        });
         return true;
     }
 
@@ -837,7 +834,7 @@ public class Notebot extends Module {
         }
 
         if (swingArm.get()) {
-            SwingMode.Both.interactSwing(InteractionHand.MAIN_HAND);
+            mc.player.swing(InteractionHand.MAIN_HAND);
         }
 
         int iterations = 0;
@@ -907,7 +904,7 @@ public class Notebot extends Module {
 
             // Swing arm
             if (swingArm.get()) {
-                SwingMode.Both.attackSwing(InteractionHand.MAIN_HAND);
+                mc.player.swing(InteractionHand.MAIN_HAND);
             }
 
             // Play notes

@@ -1,5 +1,5 @@
 /*
- * This file is part of the Meteor Client distribution (https://github.com/MeteorDevelopment/meteor-client).
+ * This file is part of the Meteor Client distribution (https://github.com/MeteorDevelopment/lithium).
  * Copyright (c) Meteor Development.
  */
 
@@ -89,7 +89,7 @@ public class PacketLogger extends Module {
 
     private final Setting<Boolean> logToFile = sgOutput.add(new BoolSetting.Builder()
         .name("log-to-file")
-        .description("Save packet logs to a file in the meteor-client folder.")
+        .description("Save packet logs to a file in the lithium folder.")
         .defaultValue(false)
         .build()
     );

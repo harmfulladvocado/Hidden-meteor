@@ -44,15 +44,17 @@ public abstract class Module implements ISerializable<Module>, Comparable<Module
     public boolean serialize = true;
     public boolean runInMainMenu = false;
     public boolean autoSubscribe = true;
+    public boolean defaultActive = false;
 
     public final Keybind keybind = Keybind.none();
     public boolean toggleOnBindRelease = false;
     public boolean chatFeedback = true;
     public boolean favorite = false;
+    public boolean bindable = true;
 
     public Module(Category category, String name, String description, String... aliases) {
         if (name.contains(" "))
-            MeteorClient.LOG.warn("Module '{}' contains invalid characters in its name making it incompatible with Meteor Client commands.", name);
+            MeteorClient.LOG.warn("Module '{}' contains invalid characters in its name making it incompatible with Lithium commands.", name);
 
         this.mc = Minecraft.getInstance();
         this.category = category;
@@ -180,7 +182,7 @@ public abstract class Module implements ISerializable<Module>, Comparable<Module
         Tag settingsTag = tag.get("settings");
         if (settingsTag instanceof CompoundTag compoundTag) settings.fromTag(compoundTag);
 
-        boolean active = tag.getBooleanOr("active", false);
+        boolean active = tag.getBooleanOr("active", defaultActive);
         if (active != isActive()) toggle();
 
         return this;

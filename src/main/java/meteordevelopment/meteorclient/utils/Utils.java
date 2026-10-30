@@ -126,7 +126,9 @@ public class Utils {
     public static String getWorldTime() {
         if (mc.level == null) return "00:00";
 
-        int ticks = (int) Math.floorMod(mc.level.getDefaultClockTime() + 6000L, 24000L);
+        int ticks = (int) (mc.level.getGameTime() % 24000);
+        ticks += 6000;
+        if (ticks > 24000) ticks -= 24000;
 
         return String.format("%02d:%02d", ticks / 1000, (int) (ticks % 1000 / 1000.0 * 60));
     }
@@ -274,10 +276,10 @@ public class Utils {
         DataComponentMap components = itemStack.getComponents();
 
         if (components.has(DataComponents.CONTAINER)) {
-            List<ItemStack> stacks = components.get(DataComponents.CONTAINER).itemCopies().toList();
+            var stacks = components.get(DataComponents.CONTAINER).allItemsCopyStream().toList();
 
             for (int i = 0; i < stacks.size(); i++) {
-                if (i < items.length) items[i] = stacks.get(i);
+                if (i >= 0 && i < items.length) items[i] = stacks.get(i);
             }
         } else if (components.has(DataComponents.BLOCK_ENTITY_DATA)) {
             TypedEntityData<BlockEntityType<?>> blockEntityData = components.get(DataComponents.BLOCK_ENTITY_DATA);

@@ -24,12 +24,13 @@ import meteordevelopment.meteorclient.renderer.Fonts;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.hud.elements.keyboard.KeyboardHud;
 import meteordevelopment.meteorclient.utils.Utils;
-import meteordevelopment.meteorclient.utils.misc.FileDialogs;
 import meteordevelopment.meteorclient.utils.render.DisplayItemUtils;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import net.minecraft.client.resources.language.I18n;
 import org.apache.commons.lang3.Strings;
+import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -494,18 +495,24 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
 
         WButton selectFile = list.add(theme.button("Select File")).widget();
 
-        WLabel fileName = list.add(theme.label(fileName(setting))).widget();
+        WLabel fileName = list.add(theme.label((setting.get() != null && setting.get().exists()) ? setting.get().getName() : "No file selected.")).widget();
 
-        selectFile.action = () -> FileDialogs.openFile(setting.filter, file -> {
-            setting.set(file);
-            fileName.set(fileName(setting));
-        });
+        selectFile.action = () -> {
+            String path = TinyFileDialogs.tinyfd_openFileDialog(
+                "Select File",
+                null,
+                setting.filters,
+                null,
+                false
+            );
 
-        reset(table, setting, () -> fileName.set(fileName(setting)));
-    }
+            if (path != null) {
+                setting.set(new File(path));
+                fileName.set(setting.get().getName());
+            }
+        };
 
-    private static String fileName(FileSetting setting) {
-        return setting.get() != null && setting.get().exists() ? setting.get().getName() : "No file selected.";
+        reset(table, setting, () -> fileName.set((setting.get() != null && setting.get().exists()) ? setting.get().getName() : "No file selected."));
     }
 
     // Other

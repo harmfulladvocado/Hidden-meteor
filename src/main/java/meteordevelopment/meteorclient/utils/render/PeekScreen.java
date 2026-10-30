@@ -5,7 +5,6 @@
 
 package meteordevelopment.meteorclient.utils.render;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.render.BetterTooltips;
 import meteordevelopment.meteorclient.utils.Utils;
@@ -21,6 +20,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.inventory.ShulkerBoxMenu;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.NonNull;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
 

@@ -48,11 +48,7 @@ public abstract class LevelRendererMixin implements ILevelRenderer {
     @Unique
     private FeatureRenderDispatcher renderDispatcher;
     @Unique
-    private RenderBuffers outlineRenderBuffers;
-    @Unique
-    private final OutlineRenderCommandQueue chamsRenderCommandQueue = new OutlineRenderCommandQueue();
-    @Unique
-    private final OutlineRenderCommandQueue entityOutlineRenderCommandQueue = new OutlineRenderCommandQueue();
+    private final OutlineRenderCommandQueue outlineRenderCommandQueue = new OutlineRenderCommandQueue();
 
     @Inject(method = "checkPoseStack", at = @At("HEAD"), cancellable = true)
     private void onCheckPoseStack(PoseStack poseStack, CallbackInfo ci) {
@@ -75,11 +71,6 @@ public abstract class LevelRendererMixin implements ILevelRenderer {
 
     // Entity Shaders
 
-    @ModifyExpressionValue(method = "executeOutline", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/LevelRenderer;currentFrameRendersEntityOutline:Z", opcode = Opcodes.GETFIELD))
-    private boolean meteor$allowCustomEntityOutlines(boolean original) {
-        return original || !framebufferStack.isEmpty();
-    }
-
     @Inject(method = "render", at = @At("HEAD"))
     private void onRenderLevelHead(GraphicsResourceAllocator resourceAllocator, boolean renderOutline, CameraRenderState cameraState, GpuBufferSlice terrainFog, Vector4f fogColor, boolean shouldRenderSky, boolean consistentDepthRequired, CallbackInfo ci) {
         PostProcessShaders.beginRender();
@@ -88,9 +79,8 @@ public abstract class LevelRendererMixin implements ILevelRenderer {
     @Inject(method = "submitEntities", at = @At("TAIL"))
     private void onSubmitEntities(PoseStack poseStack, LevelRenderState levelRenderState, SubmitNodeCollector output, CallbackInfo ci) {
         if (renderDispatcher == null) {
-            outlineRenderBuffers = new RenderBuffers(0);
             renderDispatcher = new FeatureRenderDispatcher(
-                outlineRenderBuffers,
+                renderBuffers,
                 mc.getModelManager(),
                 mc.getAtlasManager(),
                 mc.font,
@@ -98,13 +88,14 @@ public abstract class LevelRendererMixin implements ILevelRenderer {
             );
         }
 
-        draw(levelRenderState, poseStack, PostProcessShaders.CHAMS, chamsRenderCommandQueue, _ -> Color.WHITE);
-        draw(levelRenderState, poseStack, PostProcessShaders.ENTITY_OUTLINE, entityOutlineRenderCommandQueue, entity -> Modules.get().get(ESP.class).getColor(entity));
+        draw(levelRenderState, poseStack, PostProcessShaders.CHAMS, _ -> Color.WHITE);
+        draw(levelRenderState, poseStack, PostProcessShaders.ENTITY_OUTLINE, entity -> Modules.get().get(ESP.class).getColor(entity));
     }
 
     @Unique
-    private void draw(LevelRenderState worldState, PoseStack matrices, EntityShader shader, OutlineRenderCommandQueue commandQueue, Function<Entity, Color> colorGetter) {
+    private void draw(LevelRenderState worldState, PoseStack matrices, EntityShader shader, Function<Entity, Color> colorGetter) {
         var camera = worldState.cameraRenderState.pos;
+        var empty = true;
 
         for (var state : worldState.entityRenderStates) {
             Entity entity = ((IEntityRenderState) state).meteor$getEntity();
@@ -114,55 +105,41 @@ public abstract class LevelRendererMixin implements ILevelRenderer {
 
             var color = colorGetter.apply(entity);
             if (color == null) continue;
-            commandQueue.setColor(color);
+            outlineRenderCommandQueue.setColor(color);
 
             var renderer = entityRenderDispatcher.getRenderer(state);
             var offset = renderer.getRenderOffset(state);
 
             matrices.pushPose();
             matrices.translate(state.x - camera.x + offset.x, state.y - camera.y + offset.y, state.z - camera.z + offset.z);
-            renderer.submit(state, matrices, commandQueue, worldState.cameraRenderState);
+            renderer.submit(state, matrices, outlineRenderCommandQueue, worldState.cameraRenderState);
             matrices.popPose();
+
+            empty = false;
         }
-    }
 
-    // executeOutline must run during the main pass, before vanilla uploads its staged buffers.
-    @Inject(method = "lambda$addMainPass$0", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;executeOutline(Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;)V"))
-    private void addMainPass$submitEntityVertices(CallbackInfo ci) {
-        drawOutline(PostProcessShaders.CHAMS, chamsRenderCommandQueue);
-        drawOutline(PostProcessShaders.ENTITY_OUTLINE, entityOutlineRenderCommandQueue);
-        PostProcessShaders.submitEntityVertices();
-    }
-
-    @Unique
-    private void drawOutline(EntityShader shader, OutlineRenderCommandQueue commandQueue) {
-        if (commandQueue.submitsPerOrder.isEmpty()) return;
+        if (empty)
+            return;
 
         meteor$pushEntityOutlineFramebuffer(shader.framebuffer);
         try {
-            try (var frame = renderDispatcher.prepareFrame(commandQueue)) {
+            try (var frame = renderDispatcher.prepareFrame(outlineRenderCommandQueue)) {
                 executeOutline(frame);
             }
         } finally {
-            commandQueue.submitsPerOrder.clear();
+            outlineRenderCommandQueue.submitsPerOrder.clear();
             meteor$popEntityOutlineFramebuffer();
         }
+    }
+
+    @Inject(method = "lambda$addMainPass$0", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;executeOutline(Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;)V", shift = At.Shift.AFTER))
+    private void addMainPass$submitEntityVertices(CallbackInfo ci) {
+        PostProcessShaders.submitEntityVertices();
     }
 
     @Inject(method = "resize", at = @At("HEAD"))
     private void onResize(int width, int height, CallbackInfo ci) {
         PostProcessShaders.onResized(width, height);
-    }
-
-    @Inject(method = "endFrame", at = @At("TAIL"))
-    private void onEndFrame(CallbackInfo ci) {
-        if (outlineRenderBuffers != null) outlineRenderBuffers.endFrame();
-    }
-
-    @Inject(method = "close", at = @At("TAIL"))
-    private void onClose(CallbackInfo ci) {
-        if (outlineRenderBuffers != null) outlineRenderBuffers.close();
-        if (renderDispatcher != null) renderDispatcher.close();
     }
 
     // ILevelRenderer
@@ -179,6 +156,10 @@ public abstract class LevelRendererMixin implements ILevelRenderer {
     @Shadow
     @Final
     private EntityRenderDispatcher entityRenderDispatcher;
+    @Shadow
+    @Final
+    private RenderBuffers renderBuffers;
+
     @Shadow
     protected abstract void executeOutline(FeatureRenderDispatcher.PreparedFrame featureFrame);
 

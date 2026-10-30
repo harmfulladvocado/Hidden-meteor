@@ -206,7 +206,7 @@ public class PlayerUtils {
             }
 
             // Check for beds if in nether
-            if (mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.BED_RULE).destroyOnUse()) {
+            if (mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.BED_RULE).explodes()) {
                 BlockPos playerPos = mc.player.blockPosition();
                 int range = 6;
 
