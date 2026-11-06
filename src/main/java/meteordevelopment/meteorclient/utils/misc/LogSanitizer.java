@@ -342,53 +342,24 @@ public class LogSanitizer {
 
     private static void sanitizeModList(List<String> cleaned) {
         int start = -1;
-        for (int i = 0; i < cleaned.size(); i++) {
-            if (cleaned.get(i).trim().matches(".*\\]: Loading \\d+ mods:.*")) {
-                start = i + 1;
-                break;
-            }
-        }
-        if (start < 0) return;
+        int end = -1;
 
-        int end = cleaned.size();
-        for (int i = start; i < cleaned.size(); i++) {
-            if (cleaned.get(i).trim().startsWith("[")) {
+        for (int i = 0; i < cleaned.size(); i++) {
+            String line = cleaned.get(i).trim();
+            if (start < 0 && line.matches(".*\\]: Loading \\d+ mods:.*")) {
+                start = i;
+            } else if (start >= 0 && line.startsWith("[")) {
                 end = i;
                 break;
             }
         }
 
-        List<String> modBlock = new ArrayList<>(cleaned.subList(start, end));
-        cleaned.subList(start, end).clear();
+        if (start < 0) return;
+        if (end < 0) end = cleaned.size();
 
-        List<String> result = new ArrayList<>();
-        boolean skipChildren = false;
-
-        for (String line : modBlock) {
-            String t = line.trim();
-            boolean isTopLevel = t.startsWith("- ");
-            boolean isSub = t.startsWith("|-- ") || t.startsWith("\\-- ");
-
-            if (isTopLevel) {
-                String modName = t.substring(2);
-                if (!isKnownTopLevelMod(modName)) {
-                    skipChildren = true;
-                } else {
-                    skipChildren = false;
-                    result.add(line);
-                    if (isNoChildrenMod(modName)) {
-                        skipChildren = true;
-                    }
-                }
-            } else if (isSub) {
-                if (!skipChildren) result.add(line);
-            } else {
-                skipChildren = false;
-                result.add(line);
-            }
+        for (int i = end - 1; i >= start; i--) {
+            cleaned.remove(i);
         }
-
-        cleaned.addAll(start, result);
     }
 
     private static int countModEntries(List<String> lines, int headerIndex) {

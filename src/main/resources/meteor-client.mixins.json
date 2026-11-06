@@ -161,6 +161,8 @@
     "MutableComponentMixin",
     "OptionInstanceMixin",
     "OptionsMixin",
+    "PackSelectionModelMixin",
+    "PackSelectionScreenMixin",
     "PacketBundlingMixin",
     "ParticleEngineMixin",
     "PlayerAccessor",
