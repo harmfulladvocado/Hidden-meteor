@@ -72,6 +72,7 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
         factories.put(BlockDataSetting.class, (table, setting) -> blockDataW(table, (BlockDataSetting<?>) setting));
         factories.put(PotionSetting.class, (table, setting) -> potionW(table, (PotionSetting) setting));
         factories.put(StringListSetting.class, (table, setting) -> stringListW(table, (StringListSetting) setting));
+        factories.put(ResourcePackListSetting.class, (table, setting) -> resourcePackListW(table, (ResourcePackListSetting) setting));
         factories.put(BlockPosSetting.class, (table, setting) -> blockPosW(table, (BlockPosSetting) setting));
         factories.put(ColorListSetting.class, (table, setting) -> colorListW(table, (ColorListSetting) setting));
         factories.put(FontFaceSetting.class, (table, setting) -> fontW(table, (FontFaceSetting) setting));
@@ -217,6 +218,10 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
     private void stringListW(WTable table, StringListSetting setting) {
         WTable wtable = table.add(theme.table()).expandX().widget();
         StringListSetting.fillTable(theme, wtable, setting);
+    }
+
+    private void resourcePackListW(WTable table, ResourcePackListSetting setting) {
+        selectW(table, setting, () -> mc.gui.setScreen(new ResourcePackListSettingScreen(theme, setting)));
     }
 
     private <T extends Enum<?>> void enumW(WTable table, EnumSetting<T> setting) {

@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import meteordevelopment.meteorclient.systems.modules.Anti_detection.HideKeybinds;
+import meteordevelopment.meteorclient.systems.modules.Anti_detection.HideResourcePacks;
 import meteordevelopment.meteorclient.systems.modules.Anti_detection.Panic;
 import meteordevelopment.meteorclient.systems.modules.Anti_detection.EmptyScreenshots;
 import meteordevelopment.meteorclient.systems.modules.Anti_detection.FixInconsistencies;
@@ -613,6 +614,7 @@ public class Modules extends System<Modules> {
         add(new Panic());
         add(new EmptyScreenshots());
         add(new HideKeybinds());
+        add(new HideResourcePacks());
         add(new FixInconsistencies());
         add(new ResistTranslationDetection());
         add(new VanishNotifier());

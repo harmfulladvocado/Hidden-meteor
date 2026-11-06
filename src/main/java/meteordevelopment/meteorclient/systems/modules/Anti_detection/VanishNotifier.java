@@ -5,6 +5,7 @@
 
 package meteordevelopment.meteorclient.systems.modules.Anti_detection;
 
+import meteordevelopment.meteorclient.events.entity.EntityDestroyEvent;
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
 import meteordevelopment.meteorclient.events.render.Render2DEvent;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
@@ -26,16 +27,13 @@ import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.ClientboundDisconnectPacket;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameType;
 import org.joml.Vector3d;
 
 import java.util.*;
@@ -82,6 +80,15 @@ public class VanishNotifier extends Module {
         .defaultValue(64.0)
         .min(1.0)
         .sliderRange(5.0, 128.0)
+        .build()
+    );
+
+    private final Setting<Double> keepAfterLost = sgDetection.add(new DoubleSetting.Builder()
+        .name("keep-after-lost")
+        .description("Seconds to keep showing a vanished player's last known location. 0 = until they return.")
+        .defaultValue(120.0)
+        .min(0.0)
+        .sliderRange(0.0, 300.0)
         .build()
     );
 
@@ -295,23 +302,54 @@ public class VanishNotifier extends Module {
         }
     }
 
+    private static class PendingTarget {
+        final UUID uuid;
+        final String name;
+        final DetectionReason reason;
+        final double x, y, z;
+        final double width, height;
+        final long confirmAt;
+
+        PendingTarget(UUID uuid, String name, DetectionReason reason, double x, double y, double z, double width, double height, long confirmAt) {
+            this.uuid = uuid;
+            this.name = name;
+            this.reason = reason;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.width = width;
+            this.height = height;
+            this.confirmAt = confirmAt;
+        }
+    }
+
+    private static final long TAB_VANISH_CONFIRM_MS = 1000L;
+    private static final long UNVANISH_GRACE_MS = 500L;
+
     private final Map<UUID, VanishTarget> activeTargets = new HashMap<>();
+    private final Map<UUID, PendingTarget> pendingTargets = new HashMap<>();
+    private final Map<UUID, Long> tabVanishSince = new HashMap<>();
     private final Vector3d nametagPos = new Vector3d();
     private boolean reactionTriggered = false;
 
     public VanishNotifier() {
         super(Categories.Anti_detection, "vanish-notifier", "Detects vanished staff/players near you and triggers customizable alerts & reactions.");
+        defaultActive = false;
     }
 
     @Override
     public void onActivate() {
         activeTargets.clear();
+        pendingTargets.clear();
+        tabVanishSince.clear();
         reactionTriggered = false;
     }
 
     @Override
     public void onDeactivate() {
         activeTargets.clear();
+        pendingTargets.clear();
+        tabVanishSince.clear();
         reactionTriggered = false;
     }
 
@@ -335,90 +373,149 @@ public class VanishNotifier extends Module {
 
         Set<UUID> seenThisTick = new HashSet<>();
 
+        confirmPendingTargets(now);
+
         for (Player player : mc.level.players()) {
-            if (player == null || player.isRemoved()) continue;
-            if (ignoreSelf.get() && player == mc.player) continue;
-            if (ignoreFriends.get() && Friends.get().isFriend(player)) continue;
+            if (!isTrackable(player)) continue;
+            if (player.distanceToSqr(mc.player) > maxDistSq) continue;
 
-            String pName = player.getName().getString();
-            if (isNameIgnored(pName)) continue;
-
-            double distSq = player.distanceToSqr(mc.player);
-            if (distSq > maxDistSq) continue;
-
-            DetectionReason reason = null;
-
-            // 1. Creative + Invisible
-            if (detectCreativeInvis.get()) {
-                boolean isCreative = player.isCreative();
-                boolean isInvis = player.isInvisible();
-                if (isCreative && isInvis) {
-                    reason = DetectionReason.CreativeInvisible;
-                }
+            DetectionReason reason = classify(player);
+            if (reason == null) {
+                tabVanishSince.remove(player.getUUID());
+                continue;
             }
 
-            // 2. Spectator
-            if (reason == null && detectSpectator.get()) {
-                if (player.isSpectator()) {
-                    reason = DetectionReason.Spectator;
-                }
+            // entity present but missing from tab: confirm it isn't just a leave race
+            if (reason == DetectionReason.TabVanish && !activeTargets.containsKey(player.getUUID())) {
+                long since = tabVanishSince.computeIfAbsent(player.getUUID(), k -> now);
+                if (now - since < TAB_VANISH_CONFIRM_MS) continue;
+            } else {
+                tabVanishSince.remove(player.getUUID());
             }
 
-            // 3. Tab-list vanish (entity exists in world within radius, but omitted from tab list)
-            if (reason == null && detectMissingFromTab.get()) {
-                if (mc.getConnection() != null) {
-                    PlayerInfo info = mc.getConnection().getPlayerInfo(player.getUUID());
-                    if (info == null) {
-                        reason = DetectionReason.TabVanish;
-                    }
-                }
-            }
+            seenThisTick.add(player.getUUID());
 
-            if (reason != null) {
-                seenThisTick.add(player.getUUID());
-                VanishTarget target = activeTargets.get(player.getUUID());
-                if (target == null) {
-                    target = new VanishTarget(
-                        player.getUUID(),
-                        pName,
-                        reason,
-                        player.getX(),
-                        player.getY(),
-                        player.getZ(),
-                        player.getBbWidth(),
-                        player.getBbHeight()
-                    );
-                    activeTargets.put(player.getUUID(), target);
-                    triggerDetection(target);
-                } else {
-                    target.x = player.getX();
-                    target.y = player.getY();
-                    target.z = player.getZ();
-                    target.width = player.getBbWidth();
-                    target.height = player.getBbHeight();
-                    target.lastSeen = now;
+            VanishTarget target = activeTargets.get(player.getUUID());
+            if (target == null) {
+                target = createTarget(player, reason);
+                activeTargets.put(player.getUUID(), target);
+                triggerDetection(target);
+            } else {
+                updateTarget(target, player, now);
 
-                    // Periodic alert if cooldown elapsed
-                    if (now - target.lastAlerted >= (long) (alertCooldown.get() * 1000.0)) {
-                        triggerNotification(target);
-                    }
+                if (now - target.lastAlerted >= (long) (alertCooldown.get() * 1000.0)) {
+                    triggerNotification(target);
                 }
             }
         }
 
-        // Clean up entities not seen for > 3 seconds (unless ghost sound which expires after 4 seconds)
-        activeTargets.entrySet().removeIf(entry -> {
-            VanishTarget t = entry.getValue();
-            if (t.reason == DetectionReason.GhostSound) {
-                return (now - t.lastSeen) > 4000L;
+        pruneTargets(now, seenThisTick);
+        tabVanishSince.keySet().removeIf(uuid -> mc.level.getPlayerByUUID(uuid) == null);
+    }
+
+    private void confirmPendingTargets(long now) {
+        pendingTargets.entrySet().removeIf(entry -> {
+            PendingTarget pending = entry.getValue();
+            if (now < pending.confirmAt) return false;
+
+            // still in tab = still connected, entity gone = hidden from world
+            if (mc.level.getPlayerByUUID(pending.uuid) == null && isInTab(pending.uuid)) {
+                VanishTarget target = activeTargets.get(pending.uuid);
+                if (target == null) {
+                    target = new VanishTarget(
+                        pending.uuid,
+                        pending.name,
+                        pending.reason,
+                        pending.x,
+                        pending.y,
+                        pending.z,
+                        pending.width,
+                        pending.height
+                    );
+                    activeTargets.put(pending.uuid, target);
+                    triggerDetection(target);
+                } else {
+                    target.lastSeen = now;
+                }
             }
-            return !seenThisTick.contains(t.uuid) && (now - t.lastSeen) > 3000L;
+
+            return true;
+        });
+    }
+
+    private void pruneTargets(long now, Set<UUID> seenThisTick) {
+        double keepSeconds = keepAfterLost.get();
+
+        activeTargets.entrySet().removeIf(entry -> {
+            VanishTarget target = entry.getValue();
+
+            if (target.reason == DetectionReason.GhostSound) {
+                return now - target.lastSeen > 4000L;
+            }
+
+            boolean entityPresent = mc.level.getPlayerByUUID(target.uuid) != null;
+            if (entityPresent) {
+                // seen again as a normal player = no longer vanished
+                return !seenThisTick.contains(target.uuid) && now - target.lastSeen > UNVANISH_GRACE_MS;
+            }
+
+            // entity gone: keep last known spot instead of forgetting it
+            return keepSeconds > 0 && now - target.lastSeen > (long) (keepSeconds * 1000.0);
         });
 
-        // Reset reaction trigger if no active targets remain
         if (activeTargets.isEmpty()) {
             reactionTriggered = false;
         }
+    }
+
+    private DetectionReason classify(Player player) {
+        if (detectCreativeInvis.get() && player.isCreative() && player.isInvisible()) {
+            return DetectionReason.CreativeInvisible;
+        }
+
+        if (detectSpectator.get() && player.isSpectator()) {
+            return DetectionReason.Spectator;
+        }
+
+        if (detectMissingFromTab.get() && !isInTab(player.getUUID())) {
+            return DetectionReason.TabVanish;
+        }
+
+        return null;
+    }
+
+    private boolean isTrackable(Player player) {
+        if (player == null || player.isRemoved()) return false;
+        if (ignoreSelf.get() && player == mc.player) return false;
+        if (ignoreFriends.get() && Friends.get().isFriend(player)) return false;
+
+        return !isNameIgnored(player.getName().getString());
+    }
+
+    private boolean isInTab(UUID uuid) {
+        return mc.getConnection() == null || mc.getConnection().getPlayerInfo(uuid) != null;
+    }
+
+    private VanishTarget createTarget(Player player, DetectionReason reason) {
+        return new VanishTarget(
+            player.getUUID(),
+            player.getName().getString(),
+            reason,
+            player.getX(),
+            player.getY(),
+            player.getZ(),
+            player.getBbWidth(),
+            player.getBbHeight()
+        );
+    }
+
+    private void updateTarget(VanishTarget target, Player player, long now) {
+        target.x = player.getX();
+        target.y = player.getY();
+        target.z = player.getZ();
+        target.width = player.getBbWidth();
+        target.height = player.getBbHeight();
+        target.lastSeen = now;
     }
 
     private boolean isNameIgnored(String name) {
@@ -430,34 +527,52 @@ public class VanishNotifier extends Module {
     }
 
     @EventHandler
+    private void onEntityDestroy(EntityDestroyEvent event) {
+        if (!(event.entity instanceof Player player) || mc.player == null || mc.level == null) return;
+        if (!isTrackable(player)) return;
+        if (player.distanceToSqr(mc.player) > detectionRadius.get() * detectionRadius.get()) return;
+
+        DetectionReason reason;
+        if (detectSpectator.get() && player.isSpectator()) {
+            reason = DetectionReason.Spectator;
+        } else if (detectCreativeInvis.get() && player.isCreative() && player.isInvisible()) {
+            reason = DetectionReason.CreativeInvisible;
+        } else if (detectMissingFromTab.get() && isInTab(player.getUUID())) {
+            // entity hidden while still in tab, confirm tab stays after a leave race
+            reason = DetectionReason.TabVanish;
+        } else {
+            return;
+        }
+
+        if (reason == DetectionReason.TabVanish) {
+            long now = System.currentTimeMillis();
+            pendingTargets.put(player.getUUID(), new PendingTarget(
+                player.getUUID(),
+                player.getName().getString(),
+                reason,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                player.getBbWidth(),
+                player.getBbHeight(),
+                now + TAB_VANISH_CONFIRM_MS
+            ));
+            return;
+        }
+
+        VanishTarget target = activeTargets.get(player.getUUID());
+        if (target == null) {
+            target = createTarget(player, reason);
+            activeTargets.put(player.getUUID(), target);
+            triggerDetection(target);
+        } else {
+            updateTarget(target, player, System.currentTimeMillis());
+        }
+    }
+
+    @EventHandler
     private void onPacketReceive(PacketEvent.Receive event) {
         if (mc.player == null || mc.level == null) return;
-
-        // Detect player removal packet
-        if (event.packet instanceof ClientboundPlayerInfoRemovePacket removePacket) {
-            if (detectMissingFromTab.get()) {
-                for (UUID id : removePacket.profileIds()) {
-                    Player player = mc.level.getPlayerByUUID(id);
-                    if (player != null && player != mc.player && (!ignoreFriends.get() || !Friends.get().isFriend(player))) {
-                        double distSq = player.distanceToSqr(mc.player);
-                        if (distSq <= detectionRadius.get() * detectionRadius.get()) {
-                            VanishTarget target = new VanishTarget(
-                                id,
-                                player.getName().getString(),
-                                DetectionReason.TabVanish,
-                                player.getX(),
-                                player.getY(),
-                                player.getZ(),
-                                player.getBbWidth(),
-                                player.getBbHeight()
-                            );
-                            activeTargets.put(id, target);
-                            triggerDetection(target);
-                        }
-                    }
-                }
-            }
-        }
 
         // Detect ghost sounds: sounds at a location where no player is visible
         if (detectGhostSounds.get() && event.packet instanceof ClientboundSoundPacket soundPacket) {
