@@ -1,286 +1,186 @@
-<p align="center">
-<img src="https://meteorclient.com/icon.png" alt="meteor-client-logo" width="15%"/>
-</p>
+# Hidden-Meteor
 
-<h1 align="center">Hidden-Meteor</h1>
+A fork of [Meteor Client](https://github.com/MeteorDevelopment/meteor-client) for Minecraft Fabric, built for anarchy servers with a focus on hiding the fact you are running a modified client.
 
-<p align="center">
-A fork of <a href="https://github.com/MeteorDevelopment/meteor-client">Meteor Client</a> for Minecraft Fabric,
-built for anarchy servers with a focus on hiding the fact you're running a modified client.
-</p>
+![Java](https://img.shields.io/badge/Java-25-blue)
+![Minecraft](https://img.shields.io/badge/Minecraft-26.3-green)
+![Fabric Loader](https://img.shields.io/badge/Fabric%20Loader-0.19.5-orange)
+![Fabric API](https://img.shields.io/badge/Fabric%20API-0.162.0%2B26.3-purple)
 
-<div align="center">
-    <a href="https://discord.gg/bBGQZvd"><img src="https://img.shields.io/discord/689197705683140636?logo=discord" alt="Discord"/></a>
-    <br>
-    <img src="https://img.shields.io/github/last-commit/MeteorDevelopment/meteor-client" alt="GitHub last commit"/>
-    <img src="https://img.shields.io/github/commit-activity/w/MeteorDevelopment/meteor-client" alt="GitHub commit activity"/>
-    <img src="https://img.shields.io/github/contributors/MeteorDevelopment/meteor-client" alt="GitHub contributors"/>
-    <br>
-    <img src="https://img.shields.io/github/languages/code-size/MeteorDevelopment/meteor-client" alt="GitHub code size in bytes"/>
-    <img src="https://img.shields.io/endpoint?url=https://ghloc.vercel.app/api/MeteorDevelopment/meteor-client/badge?filter=.java$&label=lines%20of%20code&color=blue" alt="GitHub lines of code"/>
-</div>
+## Contents
 
----
+- [About this fork](#about-this-fork)
+- [Modules](#modules)
+- [Detection hardening](#detection-hardening)
+- [Mod spoofing](#mod-spoofing)
+- [Usage](#usage)
+- [Project structure](#project-structure)
+- [Contributions](#contributions)
+- [Licensing](#licensing)
+- [Credits](#credits)
 
-## About This Fork
+## About this fork
 
-Hidden-Meteor is a fork of [Meteor Client](https://github.com/MeteorDevelopment/meteor-client) with additional
-anti-detection modules and a mod identity spoofing system designed to keep your client hidden from detection.
-All fork ***module*** additions live under the `Anti-detection` category in the module list.
+Hidden-Meteor keeps the Meteor Client feature set and adds anti-detection modules under the `Anti-detection` category. The mod also spoofs its Fabric metadata and mixin names so the running client reports as Lithium instead of Meteor.
 
----
+## Modules
 
-<h2 align="center">Fork Additions</h2>
+### Empty screenshots
 
----
+When you press F2, this module intercepts the screenshot key before Minecraft handles it, temporarily disables active modules and hides the HUD, waits for a clean frame, captures the screenshot, and restores everything.
 
-### Empty Screenshots
+Settings:
 
-When you press F2, this module intercepts the screenshot key before Minecraft handles it,
-temporarily disables all active modules and hides the HUD, waits a configurable number of frames
-for a clean render, then captures the screenshot and restores everything automatically.
-
-Your screenshots will never contain Meteor overlays, HUD elements, or module indicators.
-
-**Settings**
-
-- `disable-modules` - temporarily disables all active modules before the shot is taken (default: on)
+- `disable-modules` - temporarily disables active modules before the shot (default: on)
 - `disable-hud` - temporarily hides the HUD (default: on)
-- `customize-pending-frames` - reveals a slider to manually set how many frames to wait before
-  capturing; useful if screenshots are coming out blank (default: off, auto uses 5 frames)
-- `pending-frames` - number of frames to wait; increase if shots come out empty (visible only
-  when `customize-pending-frames` is on, default: 4)
-- `module-exceptions` - modules that will not be disabled during a screenshot
-
----
+- `customize-pending-frames` - lets you set the frame delay manually (default: off)
+- `pending-frames` - number of frames to wait (default: 4)
+- `module-exceptions` - modules that stay enabled during a screenshot
 
 ### Panic
 
-A one-shot trigger that instantly wipes all visible traces of Meteor.
-Toggling it on runs the cleanup and then immediately toggles itself back off,
-so it always acts as a single-fire action rather than a persistent state.
+A one-shot trigger that wipes visible traces of the client. Toggling it on runs the cleanup and then immediately toggles itself back off.
 
-**What it does on activation**
+What it does on activation:
 
-- Closes any open Meteor screen
-- Enables `HideKeybinds` first (so it stays on through the rest of the cleanup)
-- Disables all active modules except `HideKeybinds`, `FixInconsistencies`, and anything in your exceptions list
+- Closes any open client screen
+- Enables `Hide Keybinds` first so it stays on through the cleanup
+- Disables active modules except `Hide Keybinds`, `Fix Inconsistencies`, `Resist Translation Detection`, `No Capes`, and your exceptions
 - Hides the HUD
-- Unbinds the GUI and command keys, and clears keybinds from all non-exempt modules
+- Unbinds the GUI and command keys, and clears keybinds from non-exempt modules
 - Hides the proxies and account buttons from the main menu
-- Disables Meteor chat feedback messages
-- Clears existing chat messages that contain `[Meteor]`
-- Sanitizes `latest.log` and `debug.log` on the spot
-- Optionally writes a flag file so the cleaned state persists across game restarts
+- Disables client chat feedback
+- Clears the chat history
+- Sanitizes `latest.log`, `debug.log`, rotated logs, and crash reports
+- Optionally deletes crash reports, rotated logs, screenshots, and config contents
 
-**Settings**
+Settings:
 
-- `disable-modules` - disables all active modules (default: on)
-- `disable-commands` - blocks Meteor chat commands from running after panic (default: on)
+- `disable-modules` - disables active modules (default: on)
+- `disable-commands` - blocks client chat commands (default: on)
 - `disable-hud` - hides the HUD (default: on)
-- `clear-keybinds` - unbinds the GUI/command keys and wipes all module keybinds (default: on)
-- `hide-keybinds-from-list` - enables `HideKeybinds` as part of cleanup (default: on)
+- `clear-keybinds` - unbinds the GUI and command keys and wipes module keybinds (default: on)
+- `hide-keybinds-from-list` - enables `Hide Keybinds` as part of cleanup (default: on)
 - `hide-gui-buttons` - hides the proxies and account buttons (default: on)
-- `disable-chat-feedback` - turns off Meteor chat messages (default: on)
-- `clear-meteor-chat-feedback` - deletes existing `[Meteor]` messages from chat (default: on)
-- `close-screen` - closes any open GUI screen immediately (default: on)
+- `disable-chat-feedback` - turns off client chat messages (default: on)
+- `clear-meteor-chat-feedback` - clears the chat history (default: on)
+- `close-screen` - closes any open screen (default: on)
 - `persist-across-restarts` - writes a flag file so the cleaned state survives a restart (default: off)
-- `module-exceptions` - modules that will not be disabled or unbound when panic fires
+- `delete-crash-reports` - deletes the contents of `crash-reports` (default: on)
+- `delete-rotated-logs` - deletes rotated files in `logs` (default: on)
+- `delete-screenshots` - deletes the contents of `screenshots` (default: off)
+- `clear-config` - deletes the contents of the config folder on shutdown (default: off)
+- `module-exceptions` - modules that are not disabled or unbound
 
-When `persist-across-restarts` is on, a hidden flag file is written to your config directory.
-On the next launch, the flag is detected and deleted, and the HUD, chat feedback, GUI buttons,
-and command access are all restored automatically.
+When `persist-across-restarts` is on, a hidden flag file is written to the config directory. On the next launch the flag is detected and deleted, and the HUD, chat feedback, GUI buttons, and command access are restored.
 
----
+### Hide keybinds
 
-### Hide Keybinds
+Removes the client keybind entries from the vanilla Controls screen so a screen share does not reveal a modified client. The keys still work in game. Enabled by default.
 
-Removes Meteor's keybind entries (Open GUI, Open Commands) from the vanilla Options → Controls screen,
-so a shoulder-surf or screen share will not reveal a modified client through its listed keybinds.
-The keys continue to work normally in-game; only their entries in the Controls list are hidden.
-Enabled by default.
+Settings:
 
-**Settings**
+- `strip-options-file` - removes the keybind lines from `options.txt` on enable and on boot (default: on)
 
-- `strip-options-file` - also removes the Meteor keybind lines from `options.txt` on enable and
-  on boot, in case Minecraft regenerated them (default: on). Uses an atomic write so a crash
-  mid-rewrite cannot corrupt the file.
+### Fix inconsistencies
 
----
+Fixes visual inconsistencies caused by client modifications.
 
-### Fix Inconsistencies
+Settings:
 
-Fixes visual inconsistencies that could reveal the presence of a modified client.
+- `spoof-mod-amount` - subtracts 11 from the mod count shown on the title screen (default: on)
 
-**Settings**
+### Resist translation detection
 
-- `spoof-mod-amount` - subtracts 11 from the mod count shown in the bottom-left of the title screen
-  (e.g. `Minecraft 1.21 (15 mods)` becomes `4 mods`) to match a clean Lithium install. Enabled by default.
+Blocks servers from detecting the client through the sign translation vulnerability (MC-265322). Translation and keybind keys owned by the client are returned as raw keys instead of translated text. Enabled by default and active in the main menu.
 
-The offset of 11 accounts for Meteor and all of its bundled internal dependencies.
-Singular/plural is handled correctly, so `1 mods` will never appear.
+### No capes
 
----
+Disables Meteor capes and the HTTP requests to `meteorclient.com` used to load cape owners and textures. The module is enabled by default. Enabling capes at runtime requires disabling this module.
 
-### Resist Translation Detection
+### Hide resource packs
 
-Blocks servers from detecting Meteor via the Sign Translation Vulnerability (MC-265322).
+Hides selected resource packs from the pack selection list. Hold the reveal key to show them again.
 
-Servers exploiting this vulnerability silently force-open the sign editor on the client, which
-resolves any translation or keybind keys written on the sign into plain text before sending them
-back. Since Meteor registers its own translation and keybind keys, a server can check whether
-those keys resolve to see if the client is running Meteor.
+Settings:
 
-This module intercepts resolution of all Meteor-owned translation and keybind keys at the
-`TranslatableContents` and `KeybindContents` level, returning the raw key string instead of the
-translated value. From the server's perspective the keys are unknown, exactly as they would be
-on a vanilla client with no Meteor installed. Enabled by default and active in the main menu.
+- `packs` - resource packs to hide
+- `reveal-key` - key to hold to show hidden packs
 
----
+## Detection hardening
 
-### Detection Hardening
+### Telemetry suppression
 
-A collection of small, targeted fixes that close detection channels beyond the Sign Translation
-Vulnerability. None of these require a module toggle.
+`OnlinePlayers.update()` and `OnlinePlayers.leave()` are no-ops. The client does not send the periodic ping or leave requests to `meteorclient.com`.
 
-#### Telemetry Suppression
+### Cape requests
 
-Meteor's original `OnlinePlayers` class periodically POSTs to `https://meteorclient.com/api/online/ping`
-every five minutes and sends a final POST to `…/leave` on disconnect. Any server-side plugin that
-logs or inspects outgoing HTTP traffic (or any network-level monitor) would immediately identify
-these requests as coming from a Meteor instance.
+Cape owner and texture requests to `meteorclient.com` are skipped while `No Capes` is enabled, which is the default.
 
-Both `update()` and `leave()` are now no-ops; the requests are never made.
+### Crash report suppression
 
-**File changed:** [`OnlinePlayers.java`](file:///C:/Users/Bonte/Documents/Projects/Hidden-meteor/src/main/java/meteordevelopment/meteorclient/utils/network/OnlinePlayers.java)
+The crash report mixin has been removed from the mixin configuration. Crash reports do not include client version, build number, module names, or HUD element names.
 
-#### Crash Report Suppression
+### Mixin names
 
-Minecraft crash reports include an optional client details section. Previously, `CrashReportMixin`
-appended a dedicated section `"-- Meteor Client --"` listing client version, build number, and all
-active module and HUD element names. If a player's client crashed or a crash log was shared,
-this section would conclusively identify Meteor Client.
+Mixin configs, the mixin package, the mixin plugin, and the access widener use `lithium` names instead of Meteor names. Mixin errors report paths such as `lithium.mixin.*` and `lithium.MixinPlugin`.
 
-`CrashReportMixin` has been completely removed from the mixin configuration, ensuring no
-custom client sections or module telemetry are injected into Minecraft crash reports.
+### Keybind keys
 
-**File changed:** [`meteor-client.mixins.json`](file:///C:/Users/Bonte/Documents/Projects/Hidden-meteor/src/main/resources/meteor-client.mixins.json)
+Keybind translation keys now use `lithium` names. The translation detection block list covers both the old Meteor keys and the new Lithium keys.
 
-#### Keybind Category Key Gap
+### Title screen and Discord
 
-`ResistTranslationDetection.shouldBlock()` previously only matched keys starting with
-`"key.meteor-client."`, leaving the keybind *category* translation key
-`"key.category.meteor-client.meteor-client"` unblocked. If a server sent that exact key via
-the sign translation exploit it would resolve to `"Meteor Client"` on an unpatched client.
-
-The prefix `"key.category.meteor-client."` has been added to the block-list so the category
-key is also returned as-is rather than translated.
-
-**File changed:** [`ResistTranslationDetection.java`](file:///C:/Users/Bonte/Documents/Projects/Hidden-meteor/src/main/java/meteordevelopment/meteorclient/systems/modules/Anti_detection/ResistTranslationDetection.java)
-
----
+Title screen credits are disabled. Discord presence is not enabled automatically on first launch.
 
 ### Hitboxes
 
-Adds a `spoof-visual-size` setting to the existing Hitboxes module. When enabled, the F3+B debug
-view renders hitboxes at their original un-expanded size, hiding the expansion from view.
+Adds a `spoof-visual-size` setting to the existing Hitboxes module. When enabled, the F3+B debug view renders hitboxes at their original unexpanded size.
 
-**Settings**
+Settings:
 
-- `spoof-visual-size` - hides the hitbox expansion from the F3+B debug view so the visual size appears normal (default: on)
+- `spoof-visual-size` - hides the hitbox expansion from the F3+B debug view (default: on)
 
----
+## Mod spoofing
 
-### Mod Spoofing
+The fork reports itself as [Lithium](https://github.com/CaffeineMC/lithium-fabric). To change the spoof target, update these files.
 
-Hidden-Meteor spoofs its mod identity to appear as a different, innocent-looking mod to anything
-that queries the Fabric mod list. By default it impersonates
-[Lithium](https://github.com/CaffeineMC/lithium-fabric), a well-known server optimization mod.
+### Metadata
 
-To change what mod it impersonates, update the following files:
+`src/main/resources/fabric.mod.json` contains the spoofed name, id, description, authors, contact links, license, icon, entrypoint, mixin list, and access widener.
 
-#### 1. `fabric.mod.json`
+### Assets
 
-Change these fields to match your target mod:
+The assets folder must match the mod id:
 
-```json
-"name": "Lithium",
-"id": "lithium",
-"description": "No-bullshit, game-changing performance enhancements for Minecraft.",
-"authors": ["JellySquid", "2No2Name"],
-"contact": {
-    "homepage": "https://jellysquid.me/projects/",
-    "sources": "https://github.com/CaffeineMC/lithium-fabric",
-    "issues": "https://github.com/CaffeineMC/lithium-fabric/issues"
-},
-"license": "LGPL-3.0-only",
-"icon": "assets/lithium/icon.png",
-"environment": "",
-"custom": {
-    "lithium:build_number": "${build_number}",
-    "lithium:color": "145,61,226",
-    "lithium:commit": "${commit}"
-}
-```
-
-Remove or rename the `custom` block keys if impersonating a mod that does not use them.
-
-#### 2. Assets folder
-
-The assets folder name must match your chosen mod ID. Rename:
-
-```
+```text
 src/main/resources/assets/lithium/
 ```
 
-For example, if spoofing Sodium (`"id": "sodium"`), rename it to:
+Update the `icon` field in `fabric.mod.json` if you rename the folder.
 
-```
-src/main/resources/assets/sodium/
-```
+### Mixins
 
-Then update the `"icon"` field in `fabric.mod.json` to match, e.g. `"assets/sodium/icon.png"`.
+Mixin configs are named `lithium*.mixins.json`, and their package and plugin fields point at `lithium.mixin` and `lithium.MixinPlugin`.
 
-#### 3. Icon
+### Access widener
 
-Replace the icon at:
+`src/main/resources/lithium.classtweaker` is the access widener used by `build.gradle.kts`.
 
-```
-src/main/resources/assets/lithium/icon.png
-```
+### Log sanitizer
 
-Use the real icon of the mod you are impersonating. Square PNG, ideally 512×512.
+The log sanitizer strips Meteor-related tokens from `latest.log`, `debug.log`, rotated logs, and crash reports. If you spoof a different mod, add its id to `DENIED_TOKENS` in `src/main/java/meteordevelopment/meteorclient/utils/misc/LogSanitizer.java`.
 
-#### 4. Log Sanitizer
+### Fix inconsistencies
 
-The log sanitizer strips Meteor-related tokens from `latest.log` and `debug.log` on startup,
-shutdown, and whenever Panic fires. If spoofing a different mod, add its ID to `DENIED_TOKENS`:
-
-```java
-private static final String[] DENIED_TOKENS = {
-    "lithium",      // add your spoof target's mod ID here
-    "[Meteor]"
-};
-```
-
-Located at:
-
-```
-src/main/java/meteordevelopment/meteorclient/utils/misc/LogSanitizer.java
-```
-
-#### 5. Fix Inconsistencies
-
-Meteor bundles multiple internal dependencies, adding 11 entries to the mod count shown on the
-title screen. The `spoof-mod-amount` setting in `FixInconsistencies` subtracts exactly 11 to keep
-the displayed count consistent with your spoofed identity. This is enabled by default and requires
-no extra configuration when switching spoof targets.
-
----
+`Fix Inconsistencies` subtracts 11 from the mod count shown on the title screen to match a clean Lithium install.
 
 ## Usage
 
 ### Building
+
+1. Clone the repository.
+2. Run the build.
 
 ```bash
 git clone <repo>
@@ -288,44 +188,52 @@ cd hidden-meteor
 ./gradlew build
 ```
 
+The built jar is in `build/libs/`.
+
 ### Installation
 
-Follow the [installation guide](https://meteorclient.com/faq/installation) on the Meteor wiki.
+Place the jar in your Fabric `mods` folder and launch the game with Fabric Loader 0.19.5 or newer.
 
----
+This mod uses the `lithium` mod id, so it cannot be installed alongside the real Lithium optimization mod. Remove Lithium before launching.
+
+## Project structure
+
+```text
+src/main/java/lithium/mixin/                  Mixin classes
+src/main/java/lithium/mixininterface/         Mixin accessor interfaces
+src/main/java/meteordevelopment/meteorclient/ Client source
+src/main/java/meteordevelopment/meteorclient/systems/modules/Anti_detection/ Anti-detection modules
+src/main/resources/                           Metadata, mixin configs, assets
+src/launcher/java/lithium/                    Standalone jar launcher
+```
 
 ## Contributions
 
-Pull requests are welcome as long as the following guidelines are met:
+Pull requests are welcome when these guidelines are met:
 
-- The license header must be present in all Java source files.
-- IDE and system files belong in `.gitignore`, never in commits.
-- Match the existing code style as closely as reasonable.
-- Favour readability over compactness.
-- See the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html) for reference.
+- The license header is present in all Java source files.
+- IDE and system files stay in `.gitignore`.
+- The existing code style is followed.
+- Readability is preferred over compactness.
 
-Bug reports and suggestions go in the [issue tracker](https://github.com/MeteorDevelopment/meteor-client/issues).
-Please include as much detail as possible.
-
----
+See the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html) for reference.
 
 ## Licensing
 
 This project is licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html).
 
-If you use any code from this source:
+If you use code from this source:
 
 - You must disclose the source code of your modified work and the source code taken from this project.
-  Closed-source or obfuscated use is not permitted.
-- You must clearly inform all end users that you are using code from this project.
+- You must inform all end users that you are using code from this project.
 - Your application must be licensed under the same license.
 
----
+See [LICENSE](./LICENSE) for the full text.
 
 ## Credits
 
-[MeteorDevelopment](https://github.com/MeteorDevelopment) for [Meteor Client](https://github.com/MeteorDevelopment/meteor-client), which this fork is based on  
-[Cabaletta](https://github.com/cabaletta) and [WagYourTail](https://github.com/wagyourtail) for [Baritone](https://github.com/cabaletta/baritone)  
-The [Fabric Team](https://github.com/FabricMC) for [Fabric](https://github.com/FabricMC/fabric-loader) and [Yarn](https://github.com/FabricMC/yarn)
+[MeteorDevelopment](https://github.com/MeteorDevelopment) for [Meteor Client](https://github.com/MeteorDevelopment/meteor-client), which this fork is based on
 
-*Questions? Check the [FAQ](https://meteorclient.com/faq) or join the [Discord](https://meteorclient.com/discord).*
+[Cabaletta](https://github.com/cabaletta) and [WagYourTail](https://github.com/wagyourtail) for [Baritone](https://github.com/cabaletta/baritone)
+
+The [Fabric Team](https://github.com/FabricMC) for [Fabric](https://github.com/FabricMC/fabric-loader) and [Yarn](https://github.com/FabricMC/yarn)

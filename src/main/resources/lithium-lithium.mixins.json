@@ -1,0 +1,10 @@
+{
+  "required": false,
+  "package": "lithium.mixin.lithium",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "lithium.MixinPlugin",
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

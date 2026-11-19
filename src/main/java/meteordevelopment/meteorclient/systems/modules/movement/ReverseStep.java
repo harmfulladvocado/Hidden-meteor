@@ -6,7 +6,7 @@
 package meteordevelopment.meteorclient.systems.modules.movement;
 
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.mixininterface.IVec3;
+import lithium.mixininterface.IVec3;
 import meteordevelopment.meteorclient.settings.BoolSetting;
 import meteordevelopment.meteorclient.settings.DoubleSetting;
 import meteordevelopment.meteorclient.settings.Setting;

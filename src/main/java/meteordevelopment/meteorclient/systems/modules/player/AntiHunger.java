@@ -7,7 +7,7 @@ package meteordevelopment.meteorclient.systems.modules.player;
 
 import meteordevelopment.meteorclient.events.entity.player.SendMovementPacketsEvent;
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
-import meteordevelopment.meteorclient.mixin.ServerboundMovePlayerPacketAccessor;
+import lithium.mixin.ServerboundMovePlayerPacketAccessor;
 import meteordevelopment.meteorclient.settings.BoolSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;

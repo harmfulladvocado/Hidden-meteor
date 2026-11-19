@@ -12,7 +12,7 @@ import net.minecraft.world.level.material.FluidState;
 /**
  * As of writing, using any method that gets the players pose within this event will cause a crash.
  * <p>
- * Getting the pose calls {@link meteordevelopment.meteorclient.mixin.EntityMixin#modifyGetPose(Pose)},
+ * Getting the pose calls {@link lithium.mixin.EntityMixin#modifyGetPose(Pose)},
  * which calls {@link net.minecraft.world.entity.player.Player#canPlayerFitWithinBlocksAndEntitiesWhen(Pose)}, which
  * calculates whether there is enough space to fit your bounding box if you change into that pose. This method ends up
  * calling {@link LivingEntity#canStandOnFluid(FluidState)}, causing this event to fire

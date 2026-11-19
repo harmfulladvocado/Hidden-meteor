@@ -8,7 +8,7 @@ package meteordevelopment.meteorclient.systems.modules.render;
 import meteordevelopment.meteorclient.events.render.RenderBlockEntityEvent;
 import meteordevelopment.meteorclient.events.world.ChunkOcclusionEvent;
 import meteordevelopment.meteorclient.events.world.ParticleEvent;
-import meteordevelopment.meteorclient.mixin.BlockEntityRenderStateAccessor;
+import lithium.mixin.BlockEntityRenderStateAccessor;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;

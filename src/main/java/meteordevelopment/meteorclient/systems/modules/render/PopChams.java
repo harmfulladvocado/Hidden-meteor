@@ -7,7 +7,7 @@ package meteordevelopment.meteorclient.systems.modules.render;
 
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
-import meteordevelopment.meteorclient.mixininterface.IVec3;
+import lithium.mixininterface.IVec3;
 import meteordevelopment.meteorclient.renderer.ShapeMode;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Categories;

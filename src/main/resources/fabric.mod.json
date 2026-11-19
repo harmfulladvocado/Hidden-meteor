@@ -18,35 +18,26 @@
   "environment": "",
   "entrypoints": {
     "client": [
-      "meteordevelopment.meteorclient.MeteorClient"
+      "lithium.LithiumMod"
     ]
   },
   "mixins": [
-    "meteor-client.mixins.json",
-    "meteor-client-baritone.mixins.json",
-    "meteor-client-indigo.mixins.json",
-    "meteor-client-sodium.mixins.json",
-    "meteor-client-lithium.mixins.json",
-    "meteor-client-viafabricplus.mixins.json"
+    "lithium.mixins.json",
+    "lithium-baritone.mixins.json",
+    "lithium-indigo.mixins.json",
+    "lithium-sodium.mixins.json",
+    "lithium-lithium.mixins.json",
+    "lithium-metallum.mixins.json"
   ],
-  "accessWidener": "meteor-client.classtweaker",
+  "accessWidener": "lithium.classtweaker",
   "custom": {
     "lithium:build_number": "${build_number}",
     "lithium:color": "145,61,226",
-    "lithium:commit": "${commit}",
-    "badoptimizations:cache_hooks": {
-      "lightmap": "meteordevelopment.meteorclient.modintegration.BadOptimizationsHook"
-    }
+    "lithium:commit": "${commit}"
   },
   "depends": {
     "java": ">=${jdk_version}",
     "minecraft": "${minecraft_version}",
     "fabricloader": ">=${loader_version}"
-  },
-  "breaks": {
-    "optifabric": "*",
-    "feather": "*",
-    "origins": "*",
-    "morechathistory": "*"
   }
 }

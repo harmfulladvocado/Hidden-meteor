@@ -1,0 +1,15 @@
+{
+  "required": false,
+  "package": "lithium.mixin.metallum",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "lithium.MixinPlugin",
+  "client": [
+    "MetalDeviceMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixinextras": {
+    "minVersion": "0.5.0"
+  }
+}

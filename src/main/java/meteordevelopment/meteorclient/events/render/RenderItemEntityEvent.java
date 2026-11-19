@@ -6,7 +6,7 @@
 package meteordevelopment.meteorclient.events.render;
 
 import meteordevelopment.meteorclient.events.Cancellable;
-import meteordevelopment.meteorclient.mixininterface.IEntityRenderState;
+import lithium.mixininterface.IEntityRenderState;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.state.ItemEntityRenderState;

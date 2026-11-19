@@ -5,7 +5,7 @@
 
 package meteordevelopment.meteorclient.utils.tooltip;
 
-import meteordevelopment.meteorclient.mixin.GuiGraphicsExtractorAccessor;
+import lithium.mixin.GuiGraphicsExtractorAccessor;
 import meteordevelopment.meteorclient.utils.render.CustomBannerGuiElementRenderState;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;

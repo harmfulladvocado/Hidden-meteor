@@ -6,7 +6,7 @@
 package meteordevelopment.meteorclient.systems.modules.player;
 
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.mixin.FishingHookAccessor;
+import lithium.mixin.FishingHookAccessor;
 import meteordevelopment.meteorclient.settings.BoolSetting;
 import meteordevelopment.meteorclient.settings.IntSetting;
 import meteordevelopment.meteorclient.settings.Setting;

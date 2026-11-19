@@ -8,7 +8,8 @@ package meteordevelopment.meteorclient.utils.network;
 import com.mojang.blaze3d.platform.NativeImage;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.utils.PreInit;
+import meteordevelopment.meteorclient.systems.modules.Anti_detection.NoCapes;
+import meteordevelopment.meteorclient.utils.PostInit;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
@@ -33,19 +34,38 @@ public class Capes {
     private static final List<Cape> TO_RETRY = new ArrayList<>();
     private static final List<Cape> TO_REMOVE = new ArrayList<>();
 
+    private static boolean subscribed;
+
     private Capes() {
     }
 
-    @PreInit(dependencies = MeteorExecutor.class)
+    @PostInit(dependencies = MeteorExecutor.class)
     public static void init() {
+        if (!subscribed) {
+            MeteorClient.EVENT_BUS.subscribe(Capes.class);
+            subscribed = true;
+        }
+
+        if (NoCapes.isEnabled()) return;
+        load();
+    }
+
+    public static void clear() {
         OWNERS.clear();
         URLS.clear();
         TEXTURES.clear();
         TO_REGISTER.clear();
         TO_RETRY.clear();
         TO_REMOVE.clear();
+    }
+
+    private static void load() {
+        clear();
+        if (NoCapes.isEnabled()) return;
 
         MeteorExecutor.execute(() -> {
+            if (NoCapes.isEnabled()) return;
+
             // Cape owners
             Stream<String> lines = Http.get(CAPE_OWNERS_URL)
                 .exceptionHandler(e -> MeteorClient.LOG.error("Could not load capes: {}", e.getMessage()))
@@ -61,6 +81,8 @@ public class Capes {
                 });
             } else return;
 
+            if (NoCapes.isEnabled()) return;
+
             // Capes
             lines = Http.get(CAPES_URL).sendLines();
             if (lines != null) lines.forEach(s -> {
@@ -71,12 +93,12 @@ public class Capes {
                 }
             });
         });
-
-        MeteorClient.EVENT_BUS.subscribe(Capes.class);
     }
 
     @EventHandler
     private static void onTick(TickEvent.Post event) {
+        if (NoCapes.isEnabled()) return;
+
         synchronized (TO_REGISTER) {
             for (Cape cape : TO_REGISTER) cape.register();
             TO_REGISTER.clear();
@@ -99,6 +121,8 @@ public class Capes {
     }
 
     public static Identifier get(Player player) {
+        if (NoCapes.isEnabled()) return null;
+
         String capeName = OWNERS.get(player.getUUID());
         if (capeName != null) {
             Cape cape = TEXTURES.get(capeName);
@@ -136,6 +160,7 @@ public class Capes {
         }
 
         public void download() {
+            if (NoCapes.isEnabled()) return;
             if (downloaded || downloading || retryTimer > 0) return;
             downloading = true;
 

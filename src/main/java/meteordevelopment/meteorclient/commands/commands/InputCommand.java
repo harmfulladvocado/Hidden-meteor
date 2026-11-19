@@ -11,7 +11,7 @@ import com.mojang.datafixers.util.Pair;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.commands.Command;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.mixin.KeyMappingAccessor;
+import lithium.mixin.KeyMappingAccessor;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.multiplayer.ClientSuggestionProvider;

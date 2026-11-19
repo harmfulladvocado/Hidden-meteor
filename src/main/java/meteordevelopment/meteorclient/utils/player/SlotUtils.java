@@ -5,9 +5,9 @@
 
 package meteordevelopment.meteorclient.utils.player;
 
-import meteordevelopment.meteorclient.mixin.AbstractMountInventoryMenuAccessor;
-import meteordevelopment.meteorclient.mixin.CreativeModeInventoryScreenAccessor;
-import meteordevelopment.meteorclient.mixin.CreativeModeTabsAccessor;
+import lithium.mixin.AbstractMountInventoryMenuAccessor;
+import lithium.mixin.CreativeModeInventoryScreenAccessor;
+import lithium.mixin.CreativeModeTabsAccessor;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.registries.BuiltInRegistries;

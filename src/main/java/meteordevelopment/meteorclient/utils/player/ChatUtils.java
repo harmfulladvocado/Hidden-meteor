@@ -8,7 +8,7 @@ package meteordevelopment.meteorclient.utils.player;
 import com.mojang.brigadier.StringReader;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import meteordevelopment.meteorclient.MeteorClient;
-import meteordevelopment.meteorclient.mixininterface.IChatHud;
+import lithium.mixininterface.IChatHud;
 import meteordevelopment.meteorclient.pathing.BaritoneUtils;
 import meteordevelopment.meteorclient.systems.config.Config;
 import meteordevelopment.meteorclient.utils.PostInit;

@@ -12,6 +12,7 @@ import meteordevelopment.meteorclient.systems.hud.Hud;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.systems.modules.Modules;
+import meteordevelopment.meteorclient.utils.misc.FilesystemCleaner;
 import meteordevelopment.meteorclient.utils.misc.Keybind;
 import meteordevelopment.meteorclient.utils.misc.input.KeyBinds;
 import net.fabricmc.loader.api.FabricLoader;
@@ -22,6 +23,7 @@ import java.util.List;
 
 public class Panic extends Module {
     public static boolean COMMANDS_DISABLED = false;
+    public static boolean CLEAR_CONFIG_ON_SHUTDOWN = false;
 
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
     private final SettingGroup sgExceptions = settings.createGroup("Exceptions");
@@ -77,7 +79,7 @@ public class Panic extends Module {
 
     private final Setting<Boolean> clearChatFeedback = sgGeneral.add(new BoolSetting.Builder()
         .name("clear-meteor-chat-feedback")
-        .description("Deletes all existing chat messages containing '[Meteor]'.")
+        .description("Clears the chat history.")
         .defaultValue(true)
         .build()
     );
@@ -92,6 +94,34 @@ public class Panic extends Module {
     private final Setting<Boolean> persistAcrossRestarts = sgGeneral.add(new BoolSetting.Builder()
         .name("persist-across-restarts")
         .description("Keeps panic active across game restarts via a flag file.")
+        .defaultValue(false)
+        .build()
+    );
+
+    private final Setting<Boolean> deleteCrashReports = sgGeneral.add(new BoolSetting.Builder()
+        .name("delete-crash-reports")
+        .description("Deletes all files in the crash-reports folder.")
+        .defaultValue(true)
+        .build()
+    );
+
+    private final Setting<Boolean> deleteRotatedLogs = sgGeneral.add(new BoolSetting.Builder()
+        .name("delete-rotated-logs")
+        .description("Deletes rotated log files from the logs folder.")
+        .defaultValue(true)
+        .build()
+    );
+
+    private final Setting<Boolean> deleteScreenshots = sgGeneral.add(new BoolSetting.Builder()
+        .name("delete-screenshots")
+        .description("Deletes all files in the screenshots folder.")
+        .defaultValue(false)
+        .build()
+    );
+
+    private final Setting<Boolean> clearConfig = sgGeneral.add(new BoolSetting.Builder()
+        .name("clear-config")
+        .description("Deletes the contents of the config folder on shutdown.")
         .defaultValue(false)
         .build()
     );
@@ -152,7 +182,8 @@ public class Panic extends Module {
         if (disableModules.get()) {
             for (Module module : Modules.get().getAll()) {
                 if (module == this) continue;
-                if (module instanceof HideKeybinds || module instanceof FixInconsistencies) continue;
+                if (module instanceof HideKeybinds || module instanceof FixInconsistencies
+                    || module instanceof ResistTranslationDetection || module instanceof NoCapes) continue;
                 if (moduleExceptions.get().contains(module)) continue;
                 module.disable();
             }
@@ -167,7 +198,8 @@ public class Panic extends Module {
             KeyBinds.OPEN_COMMANDS.setKey(InputConstants.UNKNOWN);
 
             for (Module module : Modules.get().getAll()) {
-                if (module instanceof HideKeybinds || module instanceof FixInconsistencies) continue;
+                if (module instanceof HideKeybinds || module instanceof FixInconsistencies
+                    || module instanceof ResistTranslationDetection || module instanceof NoCapes) continue;
                 if (moduleExceptions.get().contains(module)) continue;
                 module.keybind.set(Keybind.none());
             }
@@ -210,6 +242,11 @@ public class Panic extends Module {
         }
 
         meteordevelopment.meteorclient.utils.misc.LogSanitizer.sanitizeLogFiles();
+
+        if (deleteCrashReports.get()) FilesystemCleaner.deleteCrashReports();
+        if (deleteRotatedLogs.get()) FilesystemCleaner.deleteRotatedLogs();
+        if (deleteScreenshots.get()) FilesystemCleaner.deleteScreenshots();
+        if (clearConfig.get()) CLEAR_CONFIG_ON_SHUTDOWN = true;
 
         this.toggle();
     }

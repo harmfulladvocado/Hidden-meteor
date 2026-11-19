@@ -6,7 +6,7 @@
 package meteordevelopment.meteorclient.utils.player;
 
 import com.mojang.datafixers.util.Pair;
-import meteordevelopment.meteorclient.mixininterface.ISlot;
+import lithium.mixininterface.ISlot;
 import meteordevelopment.meteorclient.utils.render.PeekScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;

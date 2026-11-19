@@ -14,9 +14,9 @@ import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.commands.Commands;
 import meteordevelopment.meteorclient.events.game.ReceiveMessageEvent;
 import meteordevelopment.meteorclient.events.game.SendMessageEvent;
-import meteordevelopment.meteorclient.mixin.ChatComponentAccessor;
-import meteordevelopment.meteorclient.mixininterface.IGuiMessage;
-import meteordevelopment.meteorclient.mixininterface.IGuiMessageVisible;
+import lithium.mixin.ChatComponentAccessor;
+import lithium.mixininterface.IGuiMessage;
+import lithium.mixininterface.IGuiMessageVisible;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
@@ -416,7 +416,7 @@ public class BetterChat extends Module {
     }
 
     static {
-        registerCustomHead("[Meteor]", MeteorClient.identifier("textures/icons/chat/meteor.png"));
+        registerCustomHead("[Meteor]", MeteorClient.identifier("textures/icons/chat/lithium.png"));
         registerCustomHead("[Baritone]", MeteorClient.identifier("textures/icons/chat/baritone.png"));
     }
 

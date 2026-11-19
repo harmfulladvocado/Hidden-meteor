@@ -7,7 +7,7 @@ package meteordevelopment.meteorclient.systems.modules.movement;
 
 import com.google.common.collect.Streams;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.mixininterface.IVec3;
+import lithium.mixininterface.IVec3;
 import meteordevelopment.meteorclient.pathing.PathManagers;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Categories;

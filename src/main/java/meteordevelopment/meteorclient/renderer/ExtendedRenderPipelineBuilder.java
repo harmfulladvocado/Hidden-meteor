@@ -5,8 +5,8 @@
 
 package meteordevelopment.meteorclient.renderer;
 
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import meteordevelopment.meteorclient.mixininterface.IRenderPipeline;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import lithium.mixininterface.IRenderPipeline;
 import org.jspecify.annotations.NonNull;
 
 public class ExtendedRenderPipelineBuilder extends RenderPipeline.Builder {

@@ -7,9 +7,9 @@ package meteordevelopment.meteorclient.systems.modules.movement;
 
 import meteordevelopment.meteorclient.events.entity.player.PlayerMoveEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.mixin.BlockBehaviourAccessor;
-import meteordevelopment.meteorclient.mixin.DirectionAccessor;
-import meteordevelopment.meteorclient.mixininterface.IVec3;
+import lithium.mixin.BlockBehaviourAccessor;
+import lithium.mixin.DirectionAccessor;
+import lithium.mixininterface.IVec3;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.friends.Friends;
 import meteordevelopment.meteorclient.systems.modules.Categories;
