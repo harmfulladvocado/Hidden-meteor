@@ -6,8 +6,8 @@
 package meteordevelopment.meteorclient.systems.modules.movement;
 
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.mixin.BlockBehaviourAccessor;
-import meteordevelopment.meteorclient.mixininterface.IVec3;
+import lithium.mixin.BlockBehaviourAccessor;
+import lithium.mixininterface.IVec3;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;

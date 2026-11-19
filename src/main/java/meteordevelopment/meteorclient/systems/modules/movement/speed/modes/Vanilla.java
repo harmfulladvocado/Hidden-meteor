@@ -6,7 +6,7 @@
 package meteordevelopment.meteorclient.systems.modules.movement.speed.modes;
 
 import meteordevelopment.meteorclient.events.entity.player.PlayerMoveEvent;
-import meteordevelopment.meteorclient.mixininterface.IVec3;
+import lithium.mixininterface.IVec3;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.movement.Anchor;
 import meteordevelopment.meteorclient.systems.modules.movement.speed.SpeedMode;

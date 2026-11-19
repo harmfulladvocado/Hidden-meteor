@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "package": "lithium.mixin.indigo",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "lithium.MixinPlugin",
+  "client": [
+    "AltModelBlockRendererImplMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

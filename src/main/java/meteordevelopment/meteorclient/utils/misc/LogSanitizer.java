@@ -13,9 +13,12 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractOutputStreamAppender;
 import org.apache.logging.log4j.core.filter.AbstractFilter;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalTime;
@@ -23,6 +26,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class LogSanitizer {
     private static final String[] DENIED_TOKENS = {
@@ -60,23 +66,6 @@ public class LogSanitizer {
     };
 
     private static final Pattern LOG_LINE_START = Pattern.compile("(?=\\[\\d{2}:\\d{2}:\\d{2}\\] \\[)");
-
-    private static final String[] KNOWN_TOP_LEVEL_MODS = {
-        "fabric-api",
-        "fabricloader",
-        "java",
-        "lithium",
-        "minecraft",
-        "modmenu",
-        "placeholder-api",
-    };
-
-    private static final String[] MODS_WITH_NO_CHILDREN = {
-        "lithium",
-        "java",
-        "minecraft",
-        "placeholder-api",
-    };
 
     private static boolean filterInstalled = false;
 
@@ -126,6 +115,7 @@ public class LogSanitizer {
                     }
 
                     if (isFakeMeteorMessage(msg)) return Result.DENY;
+                    if (hasDeniedThrowable(event.getThrown())) return Result.DENY;
 
                     return Result.NEUTRAL;
                 }
@@ -163,18 +153,55 @@ public class LogSanitizer {
         return false;
     }
 
+    private static boolean hasDeniedThrowable(Throwable thrown) {
+        if (thrown == null) return false;
+
+        for (String token : DENIED_TOKENS) {
+            if (thrown.toString().contains(token)) return true;
+
+            for (StackTraceElement element : thrown.getStackTrace()) {
+                if (element.getClassName().contains(token)) return true;
+            }
+        }
+
+        return false;
+    }
+
     public static void sanitizeLogFiles() {
         flushAppenders();
 
-        Path logDir;
+        Path gameDir;
         try {
-            logDir = FabricLoader.getInstance().getGameDir().resolve("logs");
+            gameDir = FabricLoader.getInstance().getGameDir();
         } catch (Exception e) {
-            logDir = Path.of("logs");
+            gameDir = Path.of(".");
         }
 
+        Path logDir = gameDir.resolve("logs");
         sanitizeFile(logDir.resolve("latest.log").toFile());
         sanitizeFile(logDir.resolve("debug.log").toFile());
+
+        try (Stream<Path> paths = Files.list(logDir)) {
+            paths.filter(Files::isRegularFile)
+                .filter(path -> {
+                    String name = path.getFileName().toString();
+                    if (name.equals("latest.log") || name.equals("debug.log")) return false;
+                    return name.endsWith(".log") || name.endsWith(".log.gz");
+                })
+                .forEach(path -> {
+                    if (path.toString().endsWith(".gz")) sanitizeGzip(path.toFile());
+                    else sanitizeFile(path.toFile());
+                });
+        } catch (Exception ignored) {}
+
+        try (Stream<Path> paths = Files.list(gameDir.resolve("crash-reports"))) {
+            paths.filter(Files::isRegularFile)
+                .filter(path -> {
+                    String name = path.getFileName().toString();
+                    return name.endsWith(".txt") || name.endsWith(".log");
+                })
+                .forEach(path -> sanitizeFile(path.toFile()));
+        } catch (Exception ignored) {}
     }
 
     private static void flushAppenders() {
@@ -194,9 +221,35 @@ public class LogSanitizer {
         try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
             byte[] bytes = new byte[(int) raf.length()];
             raf.readFully(bytes);
-            String content = new String(bytes, StandardCharsets.UTF_8);
+            String result = sanitizeContent(new String(bytes, StandardCharsets.UTF_8));
 
-            String normalized = LOG_LINE_START.matcher(
+            raf.setLength(0);
+            raf.seek(0);
+            raf.write(result.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception ignored) {}
+    }
+
+    private static void sanitizeGzip(File file) {
+        if (!file.exists() || !file.isFile() || file.length() == 0) return;
+
+        try {
+            String content;
+            try (GZIPInputStream in = new GZIPInputStream(new ByteArrayInputStream(Files.readAllBytes(file.toPath())))) {
+                content = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            }
+
+            String result = sanitizeContent(content);
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            try (GZIPOutputStream out = new GZIPOutputStream(bytes)) {
+                out.write(result.getBytes(StandardCharsets.UTF_8));
+            }
+
+            Files.write(file.toPath(), bytes.toByteArray());
+        } catch (Exception ignored) {}
+    }
+
+    private static String sanitizeContent(String content) {
+        String normalized = LOG_LINE_START.matcher(
                 content.replaceAll("(\\])(\\[\\d{2}:\\d{2}:\\d{2}\\])", "$1\n$2")
             ).replaceAll("\n");
 
@@ -232,8 +285,6 @@ public class LogSanitizer {
 
             cleaned.removeIf(l -> l.contains("Loaded configuration file for Lithium"));
             cleaned.removeIf(l -> l.contains("SpongePowered MIXIN Subsystem"));
-
-            sanitizeModList(cleaned);
 
             if (fabricLoaderVersion != null) {
                 for (int i = 0; i < cleaned.size(); i++) {
@@ -317,49 +368,7 @@ public class LogSanitizer {
                 }
             }
 
-            String result = String.join(System.lineSeparator(), cleaned) + System.lineSeparator();
-            byte[] outputBytes = result.getBytes(StandardCharsets.UTF_8);
-
-            raf.setLength(0);
-            raf.seek(0);
-            raf.write(outputBytes);
-        } catch (Exception ignored) {}
-    }
-
-    private static boolean isKnownTopLevelMod(String nameAndVersion) {
-        for (String mod : KNOWN_TOP_LEVEL_MODS) {
-            if (nameAndVersion.equals(mod) || nameAndVersion.startsWith(mod + " ") || nameAndVersion.startsWith(mod + "\t")) return true;
-        }
-        return false;
-    }
-
-    private static boolean isNoChildrenMod(String nameAndVersion) {
-        for (String mod : MODS_WITH_NO_CHILDREN) {
-            if (nameAndVersion.equals(mod) || nameAndVersion.startsWith(mod + " ") || nameAndVersion.startsWith(mod + "\t")) return true;
-        }
-        return false;
-    }
-
-    private static void sanitizeModList(List<String> cleaned) {
-        int start = -1;
-        int end = -1;
-
-        for (int i = 0; i < cleaned.size(); i++) {
-            String line = cleaned.get(i).trim();
-            if (start < 0 && line.matches(".*\\]: Loading \\d+ mods:.*")) {
-                start = i;
-            } else if (start >= 0 && line.startsWith("[")) {
-                end = i;
-                break;
-            }
-        }
-
-        if (start < 0) return;
-        if (end < 0) end = cleaned.size();
-
-        for (int i = end - 1; i >= start; i--) {
-            cleaned.remove(i);
-        }
+        return String.join(System.lineSeparator(), cleaned) + System.lineSeparator();
     }
 
     private static int countModEntries(List<String> lines, int headerIndex) {

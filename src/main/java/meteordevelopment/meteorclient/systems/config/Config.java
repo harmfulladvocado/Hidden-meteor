@@ -57,13 +57,6 @@ public class Config extends System<Config> {
         .build()
     );
 
-    public final Setting<Boolean> titleScreenCredits = sgVisual.add(new BoolSetting.Builder()
-        .name("title-screen-credits")
-        .description("Show Meteor credits on title screen")
-        .defaultValue(false)
-        .build()
-    );
-
     public final Setting<Boolean> titleScreenSplashes = sgVisual.add(new BoolSetting.Builder()
         .name("title-screen-splashes")
         .description("Show Meteor splash texts on title screen")

@@ -13,6 +13,7 @@ import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.player.ChatUtils;
 import meteordevelopment.meteorclient.utils.player.InvUtils;
 import meteordevelopment.meteorclient.utils.player.Rotations;
+import meteordevelopment.meteorclient.utils.player.SwingMode;
 import meteordevelopment.orbit.EventHandler;
 
 import java.util.List;
@@ -213,7 +214,7 @@ public class AntiAFK extends Module {
 
         // Swing
         if (swing.get() && random.nextInt(99) == 0) {
-            mc.player.swing(mc.player.getUsedItemHand());
+            SwingMode.Both.attackSwing(mc.player.getUsedItemHand());
         }
 
         // Sneak

@@ -8,7 +8,7 @@ package meteordevelopment.meteorclient.systems.modules.world;
 import meteordevelopment.meteorclient.events.entity.player.PlayerMoveEvent;
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
 import meteordevelopment.meteorclient.events.world.CollisionShapeEvent;
-import meteordevelopment.meteorclient.mixininterface.IVec3;
+import lithium.mixininterface.IVec3;
 import meteordevelopment.meteorclient.settings.BlockListSetting;
 import meteordevelopment.meteorclient.settings.BoolSetting;
 import meteordevelopment.meteorclient.settings.Setting;
@@ -84,7 +84,7 @@ public class Collisions extends Module {
     private void onPacketSend(PacketEvent.Send event) {
         if (!unloadedChunks.get()) return;
         if (event.packet instanceof ServerboundMoveVehiclePacket packet) {
-            if (!mc.level.getChunkSource().hasChunk((int) packet.position().x() >> 4, (int) packet.position().z() >> 4)) {
+            if (!mc.level.getChunkSource().hasChunk((int) packet.movingTo().position().x() >> 4, (int) packet.movingTo().position().z() >> 4)) {
                 mc.player.getVehicle().absSnapTo(mc.player.getVehicle().xo, mc.player.getVehicle().yo, mc.player.getVehicle().zo);
                 event.cancel();
             }

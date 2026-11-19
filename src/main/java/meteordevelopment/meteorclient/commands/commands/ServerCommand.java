@@ -12,7 +12,7 @@ import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.commands.Command;
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.mixin.ClientPacketListenerAccessor;
+import lithium.mixin.ClientPacketListenerAccessor;
 import meteordevelopment.meteorclient.utils.world.TickRate;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.ChatFormatting;
@@ -151,12 +151,12 @@ public class ServerCommand extends Command {
             mc.level.getDifficulty().getDisplayName().getString(),
             new DifficultyInstance(
                 mc.level.getDifficulty(),
-                mc.level.getGameTime(),
+                mc.level.getDefaultClockTime(),
                 mc.level.getChunk(mc.player.blockPosition()).getInhabitedTime(),
                 DimensionType.MOON_BRIGHTNESS_PER_PHASE[mc.level.environmentAttributes().getValue(EnvironmentAttributes.MOON_PHASE, mc.player.blockPosition()).index()] // lol
             ).getDifficulty()
         );
-        info("Day: %d", mc.level.getGameTime() / 24000L);
+        info("Day: %d", mc.level.getDefaultClockTime() / 24000L);
         info("Permission level: %s", formatPerms());
     }
 

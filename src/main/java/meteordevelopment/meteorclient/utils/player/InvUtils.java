@@ -5,7 +5,7 @@
 
 package meteordevelopment.meteorclient.utils.player;
 
-import meteordevelopment.meteorclient.mixininterface.IMultiPlayerGameMode;
+import lithium.mixininterface.IMultiPlayerGameMode;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;

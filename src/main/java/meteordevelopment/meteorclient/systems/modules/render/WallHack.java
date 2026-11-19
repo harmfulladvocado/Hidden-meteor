@@ -5,7 +5,7 @@
 
 package meteordevelopment.meteorclient.systems.modules.render;
 
-import meteordevelopment.meteorclient.MixinPlugin;
+import lithium.MixinPlugin;
 import meteordevelopment.meteorclient.events.world.ChunkOcclusionEvent;
 import meteordevelopment.meteorclient.gui.GuiTheme;
 import meteordevelopment.meteorclient.gui.widgets.WWidget;

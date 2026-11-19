@@ -5,8 +5,8 @@
 
 package meteordevelopment.meteorclient.systems.modules.Anti_detection;
 
-import meteordevelopment.meteorclient.mixin.KeyMappingAccessor;
-import meteordevelopment.meteorclient.mixin.OptionsSubScreenAccessor;
+import lithium.mixin.KeyMappingAccessor;
+import lithium.mixin.OptionsSubScreenAccessor;
 import meteordevelopment.meteorclient.settings.BoolSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.Settings;
@@ -40,8 +40,8 @@ public class HideKeybinds extends Module {
         FabricLoader.getInstance().isModLoaded("controlling");
 
     private static final Set<String> OPTIONS_KEYS_TO_STRIP = Set.of(
-        "key_key.meteor-client.open-gui",
-        "key_key.meteor-client.open-commands"
+        "key_key.lithium.open-gui",
+        "key_key.lithium.open-commands"
     );
 
     private static Class<? extends Screen> controllingScreenClass;
@@ -104,7 +104,7 @@ public class HideKeybinds extends Module {
             List<KeyMapping> list = new ArrayList<>(Arrays.asList(mc.options.keyMappings));
             list.remove(KeyBinds.OPEN_GUI);
             list.remove(KeyBinds.OPEN_COMMANDS);
-            ((meteordevelopment.meteorclient.mixin.OptionsAccessor) mc.options).setKeyMappings(list.toArray(KeyMapping[]::new));
+            ((lithium.mixin.OptionsAccessor) mc.options).setKeyMappings(list.toArray(KeyMapping[]::new));
         }
 
         Map<String, KeyMapping> all = KeyMappingAccessor.getKeysById();
@@ -125,7 +125,7 @@ public class HideKeybinds extends Module {
             List<KeyMapping> list = new ArrayList<>(Arrays.asList(mc.options.keyMappings));
             if (!list.contains(KeyBinds.OPEN_GUI)) list.add(KeyBinds.OPEN_GUI);
             if (!list.contains(KeyBinds.OPEN_COMMANDS)) list.add(KeyBinds.OPEN_COMMANDS);
-            ((meteordevelopment.meteorclient.mixin.OptionsAccessor) mc.options).setKeyMappings(list.toArray(KeyMapping[]::new));
+            ((lithium.mixin.OptionsAccessor) mc.options).setKeyMappings(list.toArray(KeyMapping[]::new));
         }
 
         Map<String, KeyMapping> all = KeyMappingAccessor.getKeysById();
@@ -182,10 +182,7 @@ public class HideKeybinds extends Module {
                 Files.write(tmp, filtered, StandardCharsets.UTF_8);
                 Files.move(tmp, optionsFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
             }
-        } catch (IOException e) {
-            // Non-fatal; worst case the lines stay in the file until the next save cycle.
-            e.printStackTrace();
-        }
+        } catch (IOException ignored) {}
     }
 
     public static void restoreIfHidden() {

@@ -45,7 +45,7 @@ public class Hitboxes extends Module {
     public final Setting<Boolean> spoofVisualSize = sgGeneral.add(new BoolSetting.Builder()
         .name("spoof-visual-size")
         .description("Renders hitboxes at normal size when F3+B is active, hiding the expansion.")
-        .defaultValue(false)
+        .defaultValue(true)
         .build()
     );
 

@@ -5,6 +5,7 @@
 
 package meteordevelopment.meteorclient.systems.modules;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -15,8 +16,8 @@ import meteordevelopment.meteorclient.systems.modules.Anti_detection.HideResourc
 import meteordevelopment.meteorclient.systems.modules.Anti_detection.Panic;
 import meteordevelopment.meteorclient.systems.modules.Anti_detection.EmptyScreenshots;
 import meteordevelopment.meteorclient.systems.modules.Anti_detection.FixInconsistencies;
+import meteordevelopment.meteorclient.systems.modules.Anti_detection.NoCapes;
 import meteordevelopment.meteorclient.systems.modules.Anti_detection.ResistTranslationDetection;
-import meteordevelopment.meteorclient.systems.modules.Anti_detection.VanishNotifier;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.events.game.GameJoinedEvent;
 import meteordevelopment.meteorclient.events.game.GameLeftEvent;
@@ -54,7 +55,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import org.jspecify.annotations.Nullable;
-import com.mojang.blaze3d.platform.InputConstants;
 
 import java.io.File;
 import java.util.*;
@@ -617,6 +617,6 @@ public class Modules extends System<Modules> {
         add(new HideResourcePacks());
         add(new FixInconsistencies());
         add(new ResistTranslationDetection());
-        add(new VanishNotifier());
+        add(new NoCapes());
     }
 }

@@ -7,7 +7,7 @@ package meteordevelopment.meteorclient.systems.modules.combat;
 
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.mixin.DirectionAccessor;
+import lithium.mixin.DirectionAccessor;
 import meteordevelopment.meteorclient.renderer.ShapeMode;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.friends.Friends;

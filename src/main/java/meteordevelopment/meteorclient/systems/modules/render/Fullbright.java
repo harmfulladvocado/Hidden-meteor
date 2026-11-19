@@ -6,7 +6,7 @@
 package meteordevelopment.meteorclient.systems.modules.render;
 
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.mixin.MobEffectInstanceAccessor;
+import lithium.mixin.MobEffectInstanceAccessor;
 import meteordevelopment.meteorclient.settings.EnumSetting;
 import meteordevelopment.meteorclient.settings.IntSetting;
 import meteordevelopment.meteorclient.settings.Setting;

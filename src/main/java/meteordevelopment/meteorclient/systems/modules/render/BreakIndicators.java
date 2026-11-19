@@ -6,7 +6,7 @@
 package meteordevelopment.meteorclient.systems.modules.render;
 
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
-import meteordevelopment.meteorclient.mixin.MultiPlayerGameModeAccessor;
+import lithium.mixin.MultiPlayerGameModeAccessor;
 import meteordevelopment.meteorclient.renderer.ShapeMode;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Categories;

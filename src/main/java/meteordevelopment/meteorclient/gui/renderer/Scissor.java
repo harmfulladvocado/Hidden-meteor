@@ -6,7 +6,7 @@
 package meteordevelopment.meteorclient.gui.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import meteordevelopment.meteorclient.mixininterface.IGpuDevice;
+import lithium.mixininterface.IGpuDevice;
 
 import java.util.ArrayList;
 import java.util.List;

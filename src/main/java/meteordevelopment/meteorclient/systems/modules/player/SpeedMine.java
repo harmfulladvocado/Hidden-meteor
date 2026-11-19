@@ -7,7 +7,7 @@ package meteordevelopment.meteorclient.systems.modules.player;
 
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.mixin.MultiPlayerGameModeAccessor;
+import lithium.mixin.MultiPlayerGameModeAccessor;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;

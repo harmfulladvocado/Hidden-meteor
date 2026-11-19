@@ -7,7 +7,6 @@ package meteordevelopment.meteorclient;
 
 import meteordevelopment.meteorclient.addons.AddonManager;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
-import meteordevelopment.meteorclient.events.game.OpenScreenEvent;
 import meteordevelopment.meteorclient.events.meteor.KeyInputEvent;
 import meteordevelopment.meteorclient.events.meteor.MouseClickEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
@@ -18,10 +17,10 @@ import meteordevelopment.meteorclient.systems.Systems;
 import meteordevelopment.meteorclient.systems.config.Config;
 import meteordevelopment.meteorclient.systems.hud.screens.AddHudElementScreen;
 import meteordevelopment.meteorclient.systems.hud.screens.HudEditorScreen;
+import meteordevelopment.meteorclient.systems.hud.screens.HudElementPresetsScreen;
 import meteordevelopment.meteorclient.systems.hud.screens.HudElementScreen;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Modules;
-import meteordevelopment.meteorclient.systems.modules.misc.DiscordPresence;
 import meteordevelopment.meteorclient.systems.modules.Anti_detection.Panic;
 import meteordevelopment.meteorclient.utils.PostInit;
 import meteordevelopment.meteorclient.utils.PreInit;
@@ -33,13 +32,13 @@ import meteordevelopment.meteorclient.utils.misc.input.KeyBinds;
 import meteordevelopment.meteorclient.utils.network.OnlinePlayers;
 import meteordevelopment.orbit.EventBus;
 import meteordevelopment.orbit.EventHandler;
-import meteordevelopment.orbit.EventPriority;
 import meteordevelopment.orbit.IEventBus;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,9 +63,6 @@ public class MeteorClient implements ClientModInitializer {
     public static final IEventBus EVENT_BUS = new EventBus();
     public static final File FOLDER = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).toFile();
     public static final Logger LOG;
-
-    private boolean wasWidgetScreen;
-    private boolean wasHudHiddenRoot;
 
     static {
         MOD_META = FabricLoader.getInstance().getModContainer(MOD_ID).orElseThrow().getMetadata();
@@ -135,7 +131,6 @@ public class MeteorClient implements ClientModInitializer {
             FOLDER.getParentFile().mkdirs();
             FOLDER.mkdir();
             Systems.addPreLoadTask(() -> {
-                Modules.get().get(DiscordPresence.class).enable();
                 Modules.get().get(meteordevelopment.meteorclient.systems.modules.Anti_detection.HideKeybinds.class).enable();
                 Modules.get().get(meteordevelopment.meteorclient.systems.modules.Anti_detection.FixInconsistencies.class).enable();
             });
@@ -185,6 +180,7 @@ public class MeteorClient implements ClientModInitializer {
             OnlinePlayers.leave();
             Systems.save();
             GuiThemes.save();
+            if (Panic.CLEAR_CONFIG_ON_SHUTDOWN) meteordevelopment.meteorclient.utils.misc.FilesystemCleaner.clearConfig();
         }));
     }
 
@@ -214,21 +210,18 @@ public class MeteorClient implements ClientModInitializer {
         else if (Utils.canOpenGui()) Tabs.get().getFirst().openScreen(GuiThemes.get());
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    private void onOpenScreen(OpenScreenEvent event) {
-        if (event.screen instanceof WidgetScreen) {
-            if (!wasWidgetScreen) wasHudHiddenRoot = mc.gameRenderer.gameRenderState().guiRenderState.isHudHidden;
-            if (GuiThemes.get().hideHUD() || wasHudHiddenRoot) {
-                mc.gameRenderer.gameRenderState().guiRenderState.isHudHidden = !(event.screen instanceof HudEditorScreen)
-                    && !(event.screen instanceof AddHudElementScreen)
-                    && !(event.screen instanceof HudElementScreen);
-            }
-        } else {
-            if (wasWidgetScreen) mc.gameRenderer.gameRenderState().guiRenderState.isHudHidden = wasHudHiddenRoot;
-            wasHudHiddenRoot = mc.gameRenderer.gameRenderState().guiRenderState.isHudHidden;
-        }
+    // Hide HUD
 
-        wasWidgetScreen = event.screen instanceof WidgetScreen;
+    public static boolean shouldHideHud() {
+        if (!GuiThemes.get().hideHUD()) return false;
+
+        Screen screen = mc.gui.screen();
+        if (!(screen instanceof WidgetScreen)) return false;
+
+        return !(screen instanceof HudEditorScreen)
+            && !(screen instanceof AddHudElementScreen)
+            && !(screen instanceof HudElementScreen)
+            && !(screen instanceof HudElementPresetsScreen);
     }
 
     public static Identifier identifier(String path) {

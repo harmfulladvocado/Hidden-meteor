@@ -21,6 +21,8 @@ public class ResistTranslationDetection extends Module {
         if (key == null) return false;
         return key.startsWith("key.meteor-client.")
             || key.startsWith("key.category.meteor-client.")
+            || key.startsWith("key.lithium.")
+            || key.startsWith("key.category.lithium.")
             || key.startsWith("meteor-client.")
             || key.startsWith("gui.meteor-client.")
             || key.startsWith("meteor.")

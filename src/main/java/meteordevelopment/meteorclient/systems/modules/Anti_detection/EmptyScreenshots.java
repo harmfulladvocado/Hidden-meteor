@@ -63,7 +63,7 @@ public class EmptyScreenshots extends Module {
 
     private final Setting<List<Module>> moduleExceptions = sgExceptions.add(new ModuleListSetting.Builder()
         .name("module-exceptions")
-        .description("Modules that will NOT be disabled or unbound when panic is triggered.")
+        .description("Modules that will NOT be disabled when a screenshot is taken.")
         .defaultValue(getDefaultExceptions())
         .build()
     );
@@ -135,6 +135,7 @@ public class EmptyScreenshots extends Module {
         if (disableModules.get()) {
             for (Module module : Modules.get().getActive()) {
                 if (module == this) continue;
+                if (module instanceof ResistTranslationDetection || module instanceof NoCapes) continue;
                 if (moduleExceptions.get().contains(module)) continue;
                 savedModules.add(module);
                 module.disable();

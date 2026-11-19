@@ -5,9 +5,9 @@
 
 package meteordevelopment.meteorclient.utils.entity.simulator;
 
-import meteordevelopment.meteorclient.mixin.CrossbowItemAccessor;
-import meteordevelopment.meteorclient.mixin.ProjectileInGroundAccessor;
-import meteordevelopment.meteorclient.mixininterface.IVec3;
+import lithium.mixin.CrossbowItemAccessor;
+import lithium.mixin.ProjectileInGroundAccessor;
+import lithium.mixininterface.IVec3;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.movement.NoSlow;
 import meteordevelopment.meteorclient.systems.modules.movement.Sneak;
@@ -374,7 +374,8 @@ public class ProjectileEntitySimulator {
                 entity -> !entity.isSpectator() && entity.isAlive() && entity.isPickable(),
                 getToleranceMargin(),
                 ClipContext.Block.COLLIDER,
-                false
+                false,
+                true
             );
 
             // prevent simulating projectiles as colliding with ourselves on the first tick of movement

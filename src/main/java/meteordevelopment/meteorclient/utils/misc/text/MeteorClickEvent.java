@@ -5,7 +5,7 @@
 
 package meteordevelopment.meteorclient.utils.misc.text;
 
-import meteordevelopment.meteorclient.mixin.ScreenMixin;
+import lithium.mixin.ScreenMixin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.ClickEvent;

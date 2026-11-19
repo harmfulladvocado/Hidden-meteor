@@ -83,8 +83,6 @@ dependencies {
     compileOnly(libs.sodium) { isTransitive = false }
     compileOnly(libs.lithium) { isTransitive = false }
     compileOnly(libs.iris) { isTransitive = false }
-    compileOnly(libs.viafabricplus) { isTransitive = false }
-    compileOnly(libs.viafabricplus.api) { isTransitive = false }
 
     compileOnly(libs.baritone)
     compileOnly(libs.modmenu)
@@ -104,14 +102,6 @@ dependencies {
 
     errorprone(libs.errorprone.core)
     errorprone(libs.nullaway)
-}
-
-configurations.maybeCreate("mappings")
-
-afterEvaluate {
-    dependencies {
-        "mappings"("net.fabricmc:yarn:${libs.versions.minecraft.get()}+build.1:v2")
-    }
 }
 
 java {
@@ -148,7 +138,7 @@ listOf("api", "implementation", "include").forEach { configName ->
 }
 
 loom {
-    accessWidenerPath = file("src/main/resources/meteor-client.classtweaker")
+    accessWidenerPath = file("src/main/resources/lithium.classtweaker")
 }
 
 fun toMinecraftCompat(version: String): String {
@@ -206,16 +196,17 @@ tasks {
 
     jar {
         inputs.property("archivesName", archivesBaseName)
+        val licenseName = "LICENSE_$archivesBaseName"
 
         from("LICENSE") {
-            rename { "${it}_$archivesBaseName" }
+            rename("LICENSE", licenseName)
         }
 
         // Include launcher classes
         from(launcher.output)
 
         manifest {
-            attributes["Main-Class"] = "meteordevelopment.meteorclient.Main"
+            attributes["Main-Class"] = "lithium.Main"
         }
     }
 
@@ -255,30 +246,11 @@ tasks {
     }
 }
 
-tasks.matching { it.name == "jar" }.configureEach {
-    outputs.upToDateWhen { false }
-    outputs.cacheIf { false }
-
-    doLast {
-        val modsDir = file("C:/Users/Bonte/AppData/Roaming/PandoraLauncher/instances/Default/.minecraft/mods")
-        modsDir.mkdirs()
-
-        modsDir.listFiles()
-            ?.filter { it.name.startsWith("lithium-fabric-") && it.name.endsWith(".jar") }
-            ?.forEach { it.delete() }
-
-        copy {
-            from(outputs.files)
-            into(modsDir)
-        }
-    }
-}
-
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            artifactId = "meteor-client"
+            artifactId = "lithium-fabric"
 
             version = "${libs.versions.minecraft.get()}-SNAPSHOT"
         }

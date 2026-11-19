@@ -6,8 +6,8 @@
 package meteordevelopment.meteorclient.utils.entity.fakeplayer;
 
 import com.mojang.authlib.GameProfile;
-import meteordevelopment.meteorclient.mixin.AbstractClientPlayerAccessor;
-import meteordevelopment.meteorclient.mixin.EntityAccessor;
+import lithium.mixin.AbstractClientPlayerAccessor;
+import lithium.mixin.EntityAccessor;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.world.entity.player.Player;

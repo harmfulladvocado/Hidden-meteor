@@ -5,13 +5,13 @@
 
 package meteordevelopment.meteorclient.systems.modules.render;
 
-import meteordevelopment.meteorclient.MixinPlugin;
+import lithium.MixinPlugin;
 import meteordevelopment.meteorclient.events.render.RenderBlockEntityEvent;
 import meteordevelopment.meteorclient.events.world.AmbientOcclusionEvent;
 import meteordevelopment.meteorclient.events.world.ChunkOcclusionEvent;
 import meteordevelopment.meteorclient.gui.GuiTheme;
 import meteordevelopment.meteorclient.gui.widgets.WWidget;
-import meteordevelopment.meteorclient.mixin.BlockEntityRenderStateAccessor;
+import lithium.mixin.BlockEntityRenderStateAccessor;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
