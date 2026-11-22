@@ -179,6 +179,7 @@
     "RenderPipelineMixin",
     "RenderTickCounterDynamicMixin",
     "RenderTypeAccessor",
+    "RenderTypeMixin",
     "ResourceLoadStateTrackerAccessor",
     "ScreenEffectRendererMixin",
     "ScreenMixin",
